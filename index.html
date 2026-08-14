@@ -9,6 +9,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          serif: ['Fraunces', 'serif'],
+          mono: ['IBM Plex Mono', 'monospace'],
+        },
+        colors: {
+          brand: {
+            50: '#f0fdf4',
+            100: '#dcfce7',
+            600: '#16a34a',
+            800: '#166534',
+            900: '#14532d',
+          },
+          surface: '#F8FAFC' // Warna background slate-50 yang sangat nyaman di mata
+        }
+      }
+    }
+  }
+</script>
+
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -23,55 +47,51 @@
 </script>
 
 <style>
-  body { margin: 0; }
+  body { margin: 0; background-color: #F8FAFC; -webkit-tap-highlight-color: transparent; }
+  ::selection { background: #16a34a; color: white; }
+  
+  /* Styling Tabel yang lebih profesional */
+  .ledger-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 600px; }
+  .ledger-row td { border-bottom: 1px solid #E2E8F0; padding: 12px 16px; font-size: 14px; color: #334155; transition: background 0.2s; }
+  .ledger-row:hover td { background: #F1F5F9; }
+  .ledger-head th { text-align: left; padding: 12px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748B; border-bottom: 2px solid #CBD5E1; font-family: 'IBM Plex Mono', monospace; font-weight: 600; background: #F8FAFC;}
+  
+  /* Sembunyikan scrollbar tapi tetap bisa scroll */
+  .hide-scroll::-webkit-scrollbar { display: none; }
+  .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
 </head>
 <body>
 <div id="root"></div>
 
-<!-- MENGGUNAKAN PRESET react-classic YANG SUDAH DIBUAT DI ATAS -->
 <script type="text/babel" data-presets="react-classic">
 const { useState, useEffect, useMemo } = React;
 
 /**
  * ============================================================
- * ISI URL GOOGLE APPS SCRIPT DI BAWAH INI SEBELUM DEPLOY!
+ * API URL KINI DISIMPAN DI DALAM KODE SAJA (LEBIH AMAN)
+ * Tidak ada lagi tab Pengaturan.
  * ============================================================
  */
-const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbxsqFQC9HqvnGCfPIIuWdEzA6QzXApkdk5qWd8r7fM2EAcox7HFfCTc93xxFwgQhXkg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxsqFQC9HqvnGCfPIIuWdEzA6QzXApkdk5qWd8r7fM2EAcox7HFfCTc93xxFwgQhXkg/exec";
 
-// ---------- DEMO DATA (dipakai jika API belum disambungkan) ----------
+// ---------- DEMO DATA (Dipakai jika URL API tidak valid) ----------
 const demoAnggota = [
   { ID: "A1", Nama: "Suparjo", NIK: "3301xxxxxxxx01", NoHP: "0812xxxx01", LuasLahan_Ha: 0.8, Komoditas: "Padi", Status: "Aktif", TanggalGabung: "2022-01-10" },
   { ID: "A2", Nama: "Warsini", NIK: "3301xxxxxxxx02", NoHP: "0812xxxx02", LuasLahan_Ha: 1.2, Komoditas: "Padi", Status: "Aktif", TanggalGabung: "2022-01-10" },
   { ID: "A3", Nama: "Mulyadi", NIK: "3301xxxxxxxx03", NoHP: "0812xxxx03", LuasLahan_Ha: 0.5, Komoditas: "Jagung", Status: "Aktif", TanggalGabung: "2022-03-02" },
-  { ID: "A4", Nama: "Siti Rohana", NIK: "3301xxxxxxxx04", NoHP: "0812xxxx04", LuasLahan_Ha: 0.9, Komoditas: "Padi", Status: "Aktif", TanggalGabung: "2022-03-02" },
-  { ID: "A5", Nama: "Kusnandar", NIK: "3301xxxxxxxx05", NoHP: "0812xxxx05", LuasLahan_Ha: 1.0, Komoditas: "Padi", Status: "Aktif", TanggalGabung: "2023-01-15" },
-  { ID: "A6", Nama: "Ratmi", NIK: "3301xxxxxxxx06", NoHP: "0812xxxx06", LuasLahan_Ha: 0.7, Komoditas: "Cabai", Status: "Aktif", TanggalGabung: "2023-01-15" },
 ];
 
 const demoPupukRiwayat = [
-  { ID: "P1", Tanggal: "2026-05-04", AnggotaID: "A1", NamaAnggota: "Suparjo", Jumlah_Kg: 50, Status: "Dapat", Keterangan: "Distribusi Mei", DicatatOleh: "Admin" },
-  { ID: "P2", Tanggal: "2026-05-04", AnggotaID: "A2", NamaAnggota: "Warsini", Jumlah_Kg: 50, Status: "Dapat", Keterangan: "Distribusi Mei", DicatatOleh: "Admin" },
-  { ID: "P3", Tanggal: "2026-05-04", AnggotaID: "A3", NamaAnggota: "Mulyadi", Jumlah_Kg: 0, Status: "Menunggu", Keterangan: "Stok terbatas", DicatatOleh: "Admin" },
-  { ID: "P4", Tanggal: "2026-05-04", AnggotaID: "A4", NamaAnggota: "Siti Rohana", Jumlah_Kg: 0, Status: "Menunggu", Keterangan: "Stok terbatas", DicatatOleh: "Admin" },
-  { ID: "P5", Tanggal: "2026-06-06", AnggotaID: "A3", NamaAnggota: "Mulyadi", Jumlah_Kg: 50, Status: "Dapat", Keterangan: "Distribusi Juni", DicatatOleh: "Admin" },
-  { ID: "P6", Tanggal: "2026-06-06", AnggotaID: "A4", NamaAnggota: "Siti Rohana", Jumlah_Kg: 50, Status: "Dapat", Keterangan: "Distribusi Juni", DicatatOleh: "Admin" },
+  { ID: "P1", Tanggal: "2026-05-04", AnggotaID: "A1", NamaAnggota: "Suparjo", Jumlah_Kg: 50, Status: "Dapat" },
 ];
 
 const demoArisan = [
-  { ID: "AR1", Bulan: "2026-06", AnggotaID: "A1", NamaAnggota: "Suparjo", StatusBayar: "Lunas", Nominal: 50000, Pemenang: "N" },
-  { ID: "AR2", Bulan: "2026-06", AnggotaID: "A2", NamaAnggota: "Warsini", StatusBayar: "Lunas", Nominal: 50000, Pemenang: "Y" },
-  { ID: "AR3", Bulan: "2026-06", AnggotaID: "A3", NamaAnggota: "Mulyadi", StatusBayar: "Belum", Nominal: 50000, Pemenang: "N" },
-  { ID: "AR4", Bulan: "2026-07", AnggotaID: "A1", NamaAnggota: "Suparjo", StatusBayar: "Lunas", Nominal: 50000, Pemenang: "N" },
-  { ID: "AR5", Bulan: "2026-07", AnggotaID: "A4", NamaAnggota: "Siti Rohana", StatusBayar: "Lunas", Nominal: 50000, Pemenang: "Y" },
+  { ID: "AR1", Bulan: "2026-06", AnggotaID: "A1", NamaAnggota: "Suparjo", StatusBayar: "Lunas", Nominal: 50000, Pemenang: "Y" },
 ];
 
 const demoIuran = [
   { ID: "IR1", Bulan: "2026-07", AnggotaID: "A1", NamaAnggota: "Suparjo", StatusBayar: "Lunas", Nominal: 25000 },
-  { ID: "IR2", Bulan: "2026-07", AnggotaID: "A2", NamaAnggota: "Warsini", StatusBayar: "Lunas", Nominal: 25000 },
-  { ID: "IR3", Bulan: "2026-07", AnggotaID: "A3", NamaAnggota: "Mulyadi", StatusBayar: "Belum", Nominal: 25000 },
-  { ID: "IR4", Bulan: "2026-07", AnggotaID: "A4", NamaAnggota: "Siti Rohana", StatusBayar: "Belum", Nominal: 25000 },
 ];
 
 const BULAN_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -91,39 +111,16 @@ function bulanLabel(b) {
   return `${BULAN_ID[parseInt(m, 10) - 1]} ${y}`;
 }
 
-// ---------- Stempel (signature element) ----------
-function Stempel({ label = "TERCATAT" }) {
-  return (
-    <span
-      className="inline-flex items-center justify-center rounded-full border-2 shrink-0"
-      style={{
-        width: 54, height: 54,
-        borderColor: "#7A4B2A",
-        color: "#7A4B2A",
-        transform: "rotate(-8deg)",
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: 8,
-        fontWeight: 600,
-        letterSpacing: "0.03em",
-        textAlign: "center",
-        lineHeight: 1.1,
-        opacity: 0.85,
-      }}
-    >
-      {label}
-    </span>
-  );
-}
-
+// ---------- UI Components ----------
 function Badge({ children, tone = "neutral" }) {
   const tones = {
-    neutral: "bg-[#EFE9DC] text-[#4A4436]",
-    good: "bg-[#E4EBDD] text-[#2F4A2B]",
-    warn: "bg-[#F5E6C8] text-[#7A4B2A]",
-    bad: "bg-[#F2DEDA] text-[#8B3A2B]",
+    neutral: "bg-slate-100 text-slate-700 border-slate-200",
+    good: "bg-brand-50 text-brand-800 border-brand-100",
+    warn: "bg-amber-50 text-amber-800 border-amber-200",
+    bad: "bg-rose-50 text-rose-800 border-rose-200",
   };
   return (
-    <span className={`px-2.5 py-1 rounded-full text-xs font-medium tracking-wide ${tones[tone]}`} style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+    <span className={`px-2.5 py-1 rounded-md text-xs font-medium border ${tones[tone]} font-mono tracking-tight`}>
       {children}
     </span>
   );
@@ -131,62 +128,58 @@ function Badge({ children, tone = "neutral" }) {
 
 function SectionHeader({ eyebrow, title, desc }) {
   return (
-    <div className="mb-6">
-      <div className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#8FA383", fontFamily: "'IBM Plex Mono', monospace" }}>{eyebrow}</div>
-      <h2 className="text-3xl mb-1" style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, color: "#1F3D2B" }}>{title}</h2>
-      {desc && <p className="text-sm max-w-xl" style={{ color: "#6B6A5E" }}>{desc}</p>}
+    <div className="mb-6 md:mb-8">
+      <div className="text-xs tracking-widest uppercase mb-1.5 text-brand-600 font-mono font-semibold">{eyebrow}</div>
+      <h2 className="text-2xl md:text-3xl mb-2 font-serif font-bold text-slate-900">{title}</h2>
+      {desc && <p className="text-sm text-slate-500 max-w-2xl leading-relaxed">{desc}</p>}
     </div>
   );
 }
 
+// ================= APP ROOT =================
 function App() {
-  const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
-  const [apiUrlDraft, setApiUrlDraft] = useState(DEFAULT_API_URL);
   const [tab, setTab] = useState("dashboard");
   const [token, setToken] = useState(null);
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
-  const [loginError, setLoginError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const [anggota, setAnggota] = useState(demoAnggota);
   const [pupukRiwayat, setPupukRiwayat] = useState(demoPupukRiwayat);
   const [arisan, setArisan] = useState(demoArisan);
   const [iuran, setIuran] = useState(demoIuran);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(null);
 
-  const isConnected = !!apiUrl;
   const isAdmin = !!token;
 
   function showToast(msg, tone = "good") {
     setToast({ msg, tone });
-    setTimeout(() => setToast(null), 3200);
+    setTimeout(() => setToast(null), 3500);
   }
 
   async function apiCall(action, data = {}, method = "GET") {
-    if (!apiUrl) return null;
     setLoading(true);
     try {
       if (method === "GET") {
-        const res = await fetch(`${apiUrl}?action=${action}`);
+        const res = await fetch(`${API_URL}?action=${action}`);
         return await res.json();
       } else {
-        const res = await fetch(apiUrl, {
+        const res = await fetch(API_URL, {
           method: "POST",
           body: JSON.stringify({ action, token, ...data }),
         });
         return await res.json();
       }
     } catch (err) {
-      showToast("Gagal terhubung ke server: " + err.message, "bad");
+      showToast("Gagal terhubung ke server", "bad");
       return null;
     } finally {
       setLoading(false);
     }
   }
 
+  // Load Data
   useEffect(() => {
-    if (!apiUrl) return;
     (async () => {
       const a = await apiCall("getAnggota");
       if (a?.success) setAnggota(a.data);
@@ -198,32 +191,21 @@ function App() {
       if (ir?.success) setIuran(ir.data);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiUrl]);
+  }, []);
 
   async function handleLogin() {
-    setLoginError("");
-    if (!apiUrl) {
-      // demo mode login
-      if (loginForm.username === "admin" && loginForm.password === "admin123") {
-        setToken("demo-token");
-        setLoginOpen(false);
-        showToast("Masuk sebagai admin (mode demo)");
-      } else {
-        setLoginError("Username/password salah. Coba admin / admin123 di mode demo.");
-      }
-      return;
-    }
+    if (!API_URL) return showToast("API URL belum disetting", "bad");
     const res = await apiCall("login", { username: loginForm.username, password: loginForm.password }, "POST");
     if (res?.success) {
       setToken(res.token);
       setLoginOpen(false);
       showToast("Berhasil masuk sebagai admin");
     } else {
-      setLoginError(res?.message || "Gagal masuk");
+      showToast(res?.message || "Gagal masuk", "bad");
     }
   }
 
-  // ---------- Perhitungan antrean pupuk (adil & transparan) ----------
+  // Stats
   const antreanPupuk = useMemo(() => {
     const aktif = anggota.filter((a) => a.Status === "Aktif");
     const list = aktif.map((a) => {
@@ -244,205 +226,138 @@ function App() {
     return list;
   }, [anggota, pupukRiwayat]);
 
-  const dashboardStats = useMemo(() => {
+  const stats = useMemo(() => {
     const totalAnggota = anggota.filter((a) => a.Status === "Aktif").length;
     const totalIuran = iuran.filter((i) => i.StatusBayar === "Lunas").reduce((s, i) => s + Number(i.Nominal || 0), 0);
     const totalArisan = arisan.filter((a) => a.StatusBayar === "Lunas").reduce((s, a) => s + Number(a.Nominal || 0), 0);
     const totalPupuk = pupukRiwayat.filter((p) => p.Status === "Dapat").reduce((s, p) => s + Number(p.Jumlah_Kg || 0), 0);
-    const belumBayarIuran = iuran.filter((i) => i.StatusBayar !== "Lunas").length;
-    return { totalAnggota, totalIuran, totalArisan, totalPupuk, belumBayarIuran };
+    return { totalAnggota, totalIuran, totalArisan, totalPupuk };
   }, [anggota, iuran, arisan, pupukRiwayat]);
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", background: "#FBF8F2", minHeight: "100vh", color: "#22241F" }}>
-      <style>{`
-        ::selection { background: #C9A227; color: #1F3D2B; }
-        table { border-collapse: collapse; width: 100%; }
-        .ledger-row td { border-bottom: 1px solid #E4DFD0; padding: 10px 12px; font-size: 14px; }
-        .ledger-row:hover td { background: #F4EFE2; }
-        .ledger-head th { text-align: left; padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #8FA383; border-bottom: 2px solid #1F3D2B; font-family: 'IBM Plex Mono', monospace; font-weight: 500;}
-        input, select { font-family: 'Inter', sans-serif; }
-        button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #C9A227; outline-offset: 1px; }
-      `}</style>
-
+    <div className="font-sans bg-surface min-h-screen text-slate-800 flex flex-col md:flex-row">
       {/* TOAST */}
       {toast && (
-        <div className="fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium"
-          style={{ background: toast.tone === "bad" ? "#8B3A2B" : "#1F3D2B", color: "#FBF8F2" }}>
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium transition-all ${toast.tone === "bad" ? "bg-rose-600 text-white" : "bg-slate-800 text-white"}`}>
           {toast.msg}
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row">
-        {/* SIDEBAR */}
-        <aside className="md:w-64 shrink-0 border-b md:border-b-0 md:border-r" style={{ borderColor: "#E4DFD0", background: "#F4EFE2" }}>
-          <div className="p-6 border-b" style={{ borderColor: "#E4DFD0" }}>
-            <div className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#8FA383", fontFamily: "'IBM Plex Mono', monospace" }}>Buku Besar Digital</div>
-            <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 22, color: "#1F3D2B", lineHeight: 1.15 }}>
-              Kelompok Tani<br />Sumber Makmur
+      {/* SIDEBAR (Responsive) */}
+      <aside className="w-full md:w-64 shrink-0 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col z-10 sticky top-0 md:h-screen">
+        <div className="p-5 md:p-6 border-b border-slate-100 hidden md:block">
+          <div className="text-[10px] tracking-widest uppercase mb-1.5 text-slate-400 font-mono">Sistem Informasi</div>
+          <div className="font-serif font-bold text-xl text-brand-900 leading-tight">Kelompok Tani<br/>Sumber Makmur</div>
+        </div>
+
+        <nav className="flex md:flex-col gap-1 p-3 md:p-4 overflow-x-auto hide-scroll w-full">
+          {[
+            ["dashboard", "Ringkasan", "M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"],
+            ["anggota", "Data Anggota", "M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"],
+            ["pupuk", "Jatah Pupuk", "M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"],
+            ["keuangan", "Arisan & Iuran", "M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"],
+          ].map(([key, label, svgPath]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex items-center gap-3 px-4 py-3 md:py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${tab === key ? "bg-brand-50 text-brand-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}
+            >
+              <svg className="w-5 h-5 opacity-70" fill="currentColor" viewBox="0 0 20 20"><path d={svgPath} fillRule="evenodd" clipRule="evenodd"></path></svg>
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="p-4 mt-auto border-t border-slate-100 hidden md:block">
+          {isAdmin ? (
+            <div className="bg-brand-50 px-4 py-3 rounded-xl border border-brand-100">
+              <span className="block text-xs font-semibold text-brand-800 mb-1">Status: Admin Login</span>
+              <button onClick={() => setToken(null)} className="text-xs text-brand-600 hover:underline">Keluar (Logout)</button>
             </div>
-          </div>
+          ) : (
+            <button onClick={() => setLoginOpen(true)} className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">
+              Masuk Admin
+            </button>
+          )}
+        </div>
+      </aside>
 
-          <nav className="p-3 flex md:flex-col gap-1 overflow-x-auto">
-            {[
-              ["dashboard", "Ringkasan"],
-              ["anggota", "Data Anggota"],
-              ["pupuk", "Jatah Pupuk"],
-              ["arisan", "Arisan"],
-              ["iuran", "Iuran Wajib"],
-              ["pengaturan", "Pengaturan"],
-            ].map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className="text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
-                style={{
-                  background: tab === key ? "#1F3D2B" : "transparent",
-                  color: tab === key ? "#FBF8F2" : "#4A4436",
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-
-          <div className="p-4 mt-2">
-            {isAdmin ? (
-              <div className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: "#E4EBDD" }}>
-                <span className="text-xs font-medium" style={{ color: "#2F4A2B" }}>● Masuk sebagai Admin</span>
-                <button onClick={() => { setToken(null); showToast("Keluar dari mode admin"); }} className="text-xs underline" style={{ color: "#2F4A2B" }}>Keluar</button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setLoginOpen(true)}
-                className="w-full px-3 py-2.5 rounded-lg text-sm font-medium border"
-                style={{ borderColor: "#1F3D2B", color: "#1F3D2B" }}
-              >
-                Masuk sebagai Admin
-              </button>
-            )}
-            <div className="mt-3 text-[11px]" style={{ color: isConnected ? "#2F4A2B" : "#8B3A2B", fontFamily: "'IBM Plex Mono', monospace" }}>
-              {isConnected ? "● Terhubung ke Google Sheets" : "● Mode demo (data contoh)"}
-            </div>
-          </div>
-        </aside>
-
-        {/* MAIN */}
-        <main className="flex-1 p-6 md:p-10 max-w-5xl">
-          {tab === "dashboard" && (
-            <Dashboard stats={dashboardStats} antreanPupuk={antreanPupuk} arisan={arisan} />
-          )}
-          {tab === "anggota" && <AnggotaTab anggota={anggota} />}
-          {tab === "pupuk" && (
-            <PupukTab
-              antreanPupuk={antreanPupuk}
-              riwayat={pupukRiwayat}
-              isAdmin={isAdmin}
-              onDistribusi={async (payload) => {
-                if (apiUrl) {
-                  const res = await apiCall("distribusiPupuk", payload, "POST");
-                  if (res?.success) {
-                    showToast(res.message);
-                    const p = await apiCall("getPupukStatus");
-                    if (p?.success) setPupukRiwayat(p.riwayat);
-                  } else showToast(res?.message || "Gagal mencatat distribusi", "bad");
-                } else {
-                  // demo mode: simulate locally
-                  const anggotaAktif = anggota.filter((a) => a.Status === "Aktif");
-                  const baseId = pupukRiwayat.length + 1;
-                  const baru = anggotaAktif.map((a, i) => ({
-                    ID: "P" + (baseId + i),
-                    Tanggal: payload.tanggal,
-                    AnggotaID: a.ID,
-                    NamaAnggota: a.Nama,
-                    Jumlah_Kg: payload.anggotaIdTerpilih.includes(a.ID) ? payload.jumlahPerOrang : 0,
-                    Status: payload.anggotaIdTerpilih.includes(a.ID) ? "Dapat" : "Menunggu",
-                    Keterangan: payload.keterangan,
-                    DicatatOleh: "Admin",
-                  }));
-                  setPupukRiwayat([...pupukRiwayat, ...baru]);
-                  showToast(`Distribusi tercatat untuk ${payload.anggotaIdTerpilih.length} anggota`);
-                }
-              }}
-            />
-          )}
-          {tab === "arisan" && (
-            <ArisanTab
-              arisan={arisan}
-              anggota={anggota}
-              isAdmin={isAdmin}
-              onCatat={async (payload) => {
-                if (apiUrl) {
-                  const res = await apiCall("catatArisan", payload, "POST");
-                  if (res?.success) {
-                    showToast("Data arisan tersimpan");
-                    const ar = await apiCall("getArisan");
-                    if (ar?.success) setArisan(ar.data);
-                  } else showToast(res?.message || "Gagal menyimpan", "bad");
-                } else {
-                  const a = anggota.find((x) => x.ID === payload.anggotaId);
-                  setArisan([...arisan, {
-                    ID: "AR" + (arisan.length + 1), Bulan: payload.bulan, AnggotaID: payload.anggotaId,
-                    NamaAnggota: a?.Nama || "", StatusBayar: payload.statusBayar, Nominal: payload.nominal, Pemenang: payload.pemenang,
-                  }]);
-                  showToast("Data arisan tersimpan (mode demo)");
-                }
-              }}
-            />
-          )}
-          {tab === "iuran" && (
-            <IuranTab
-              iuran={iuran}
-              anggota={anggota}
-              isAdmin={isAdmin}
-              onCatat={async (payload) => {
-                if (apiUrl) {
-                  const res = await apiCall("catatIuran", payload, "POST");
-                  if (res?.success) {
-                    showToast("Iuran tersimpan");
-                    const ir = await apiCall("getIuran");
-                    if (ir?.success) setIuran(ir.data);
-                  } else showToast(res?.message || "Gagal menyimpan", "bad");
-                } else {
-                  const a = anggota.find((x) => x.ID === payload.anggotaId);
-                  setIuran([...iuran, {
-                    ID: "IR" + (iuran.length + 1), Bulan: payload.bulan, AnggotaID: payload.anggotaId,
-                    NamaAnggota: a?.Nama || "", StatusBayar: payload.statusBayar, Nominal: payload.nominal,
-                  }]);
-                  showToast("Iuran tersimpan (mode demo)");
-                }
-              }}
-            />
-          )}
-          {tab === "pengaturan" && (
-            <PengaturanTab
-              apiUrlDraft={apiUrlDraft}
-              setApiUrlDraft={setApiUrlDraft}
-              onSave={() => { setApiUrl(apiUrlDraft.trim()); showToast(apiUrlDraft.trim() ? "Tersambung ke Google Sheets" : "Kembali ke mode demo"); }}
-              isConnected={isConnected}
-            />
-          )}
-        </main>
+      {/* MOBILE HEADER (Logo & Login) */}
+      <div className="md:hidden flex items-center justify-between px-5 py-4 bg-white border-b border-slate-200">
+         <div className="font-serif font-bold text-lg text-brand-900">KT Sumber Makmur</div>
+         {isAdmin ? (
+            <button onClick={() => setToken(null)} className="text-xs font-medium text-rose-600 bg-rose-50 px-3 py-1.5 rounded-md">Logout</button>
+         ) : (
+            <button onClick={() => setLoginOpen(true)} className="text-xs font-medium text-slate-700 bg-slate-100 px-3 py-1.5 rounded-md">Admin</button>
+         )}
       </div>
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1 p-5 md:p-10 max-w-6xl overflow-x-hidden">
+        {loading && <div className="fixed inset-0 bg-white/50 z-40 flex items-center justify-center"><div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div></div>}
+
+        {tab === "dashboard" && <Dashboard stats={stats} antreanPupuk={antreanPupuk} arisan={arisan} />}
+        {tab === "anggota" && <AnggotaTab anggota={anggota} />}
+        {tab === "pupuk" && (
+          <PupukTab
+            antreanPupuk={antreanPupuk} riwayat={pupukRiwayat} isAdmin={isAdmin}
+            onDistribusi={async (payload) => {
+              const res = await apiCall("distribusiPupuk", payload, "POST");
+              if (res?.success) {
+                showToast("Distribusi berhasil dicatat");
+                const p = await apiCall("getPupukStatus");
+                if (p?.success) setPupukRiwayat(p.riwayat);
+              }
+            }}
+          />
+        )}
+        {tab === "keuangan" && (
+          <KeuanganTab 
+            arisan={arisan} iuran={iuran} anggota={anggota} isAdmin={isAdmin} 
+            onCatat={async (payload) => {
+              let successCount = 0;
+              let errorMsg = "";
+              
+              if (payload.bayarIuran) {
+                const res = await apiCall("catatIuran", { bulan: payload.bulan, anggotaId: payload.anggotaId, statusBayar: "Lunas", nominal: 25000 }, "POST");
+                if (res?.success) successCount++; else errorMsg += "Gagal catat iuran. ";
+              }
+              
+              if (payload.bayarArisan || payload.pemenangArisan) {
+                const res = await apiCall("catatArisan", { bulan: payload.bulan, anggotaId: payload.anggotaId, statusBayar: payload.bayarArisan ? "Lunas" : "Belum", nominal: 50000, pemenang: payload.pemenangArisan ? "Y" : "N" }, "POST");
+                if (res?.success) successCount++; else errorMsg += "Gagal catat arisan. ";
+              }
+
+              if (successCount > 0) {
+                showToast("Pencatatan keuangan berhasil");
+                const ar = await apiCall("getArisan"); if (ar?.success) setArisan(ar.data);
+                const ir = await apiCall("getIuran"); if (ir?.success) setIuran(ir.data);
+              } else if (errorMsg) {
+                showToast(errorMsg, "bad");
+              }
+            }} 
+          />
+        )}
+      </main>
 
       {/* LOGIN MODAL */}
       {loginOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(31,61,43,0.45)" }}>
-          <div className="w-full max-w-sm rounded-xl p-6" style={{ background: "#FBF8F2" }}>
-            <h3 className="text-xl mb-1" style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, color: "#1F3D2B" }}>Masuk sebagai Admin</h3>
-            <p className="text-xs mb-4" style={{ color: "#6B6A5E" }}>
-              {isConnected ? "Gunakan akun admin yang terdaftar di tab Admin pada Google Sheet." : "Mode demo — gunakan admin / admin123"}
-            </p>
-            <label className="block text-xs font-medium mb-1" style={{ color: "#4A4436" }}>Username</label>
-            <input className="w-full mb-3 px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl p-6 md:p-8 bg-white shadow-2xl">
+            <h3 className="text-2xl mb-1 font-serif font-bold text-slate-900">Akses Admin</h3>
+            <p className="text-sm mb-6 text-slate-500">Silakan masukkan kredensial Anda.</p>
+            
+            <label className="block text-xs font-semibold mb-1.5 text-slate-700">Username</label>
+            <input className="w-full mb-4 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
               value={loginForm.username} onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })} />
-            <label className="block text-xs font-medium mb-1" style={{ color: "#4A4436" }}>Password</label>
-            <input type="password" className="w-full mb-2 px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}
+            
+            <label className="block text-xs font-semibold mb-1.5 text-slate-700">Password</label>
+            <input type="password" className="w-full mb-6 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
               value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} />
-            {loginError && <p className="text-xs mb-2" style={{ color: "#8B3A2B" }}>{loginError}</p>}
-            <div className="flex gap-2 mt-4">
-              <button onClick={() => setLoginOpen(false)} className="flex-1 px-3 py-2 rounded-lg text-sm border" style={{ borderColor: "#E4DFD0" }}>Batal</button>
-              <button onClick={handleLogin} className="flex-1 px-3 py-2 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>Masuk</button>
+            
+            <div className="flex gap-3">
+              <button onClick={() => setLoginOpen(false)} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
+              <button onClick={handleLogin} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-colors shadow-sm shadow-brand-200">Masuk</button>
             </div>
           </div>
         </div>
@@ -455,51 +370,53 @@ function App() {
 function Dashboard({ stats, antreanPupuk, arisan }) {
   const pemenangTerbaru = [...arisan].reverse().find((a) => a.Pemenang === "Y");
   return (
-    <div>
-      <SectionHeader eyebrow="Ringkasan" title="Kondisi Kelompok Saat Ini" desc="Semua anggota bisa melihat halaman ini — transparansi adalah dasar keadilan." />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div className="animate-[fadeIn_0.3s_ease-out]">
+      <SectionHeader eyebrow="Beranda" title="Kondisi Kelompok Saat Ini" desc="Ringkasan transparansi data kelompok tani yang dapat diakses oleh semua anggota." />
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mb-8 md:mb-10">
         {[
           ["Anggota Aktif", stats.totalAnggota, ""],
-          ["Pupuk Tersalurkan", stats.totalPupuk + " kg", ""],
+          ["Pupuk Turun", stats.totalPupuk + " kg", ""],
           ["Kas Arisan", formatRupiah(stats.totalArisan), ""],
           ["Kas Iuran", formatRupiah(stats.totalIuran), ""],
         ].map(([label, val]) => (
-          <div key={label} className="p-4 rounded-xl border" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
-            <div className="text-xs mb-1" style={{ color: "#8FA383", fontFamily: "'IBM Plex Mono', monospace" }}>{label}</div>
-            <div className="text-2xl" style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, color: "#1F3D2B" }}>{val}</div>
+          <div key={label} className="p-4 md:p-5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+            <div className="text-[11px] md:text-xs mb-1.5 text-slate-500 font-medium uppercase tracking-wider">{label}</div>
+            <div className="text-xl md:text-3xl font-serif font-bold text-slate-900">{val}</div>
           </div>
         ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="p-5 rounded-xl border" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-semibold" style={{ color: "#1F3D2B" }}>Antrean Jatah Pupuk</h3>
-            <Stempel label="URUT ANTRE" />
-          </div>
-          <p className="text-xs mb-3" style={{ color: "#6B6A5E" }}>Urutan otomatis: yang paling lama belum dapat, didahulukan.</p>
-          <ol className="space-y-1.5">
+      <div className="grid md:grid-cols-2 gap-5 md:gap-8">
+        <div className="p-5 md:p-7 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-brand-50 rounded-bl-full -z-10"></div>
+          <h3 className="text-lg font-bold mb-1 text-slate-900">Antrean Jatah Pupuk</h3>
+          <p className="text-xs mb-5 text-slate-500">Otomatis didahulukan bagi yang paling lama tidak kebagian.</p>
+          <div className="space-y-3">
             {antreanPupuk.slice(0, 5).map((a, i) => (
-              <li key={a.id} className="flex items-center justify-between text-sm py-1.5" style={{ borderBottom: i < 4 ? "1px solid #EFEADC" : "none" }}>
-                <span><span style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#8FA383" }}>{String(i + 1).padStart(2, "0")}</span> &nbsp;{a.nama}</span>
-                <span className="text-xs" style={{ color: "#6B6A5E" }}>{a.terakhir ? `terakhir ${formatTanggal(a.terakhir)}` : "belum pernah dapat"}</span>
-              </li>
+              <div key={a.id} className="flex items-center justify-between text-sm p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="font-medium text-slate-700">
+                  <span className="text-slate-400 font-mono mr-2">{String(i + 1).padStart(2, "0")}</span>{a.nama}
+                </span>
+                <span className="text-[11px] text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200">{a.terakhir ? formatTanggal(a.terakhir) : "Belum Pernah"}</span>
+              </div>
             ))}
-          </ol>
+          </div>
         </div>
 
-        <div className="p-5 rounded-xl border" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
-          <h3 className="text-base font-semibold mb-3" style={{ color: "#1F3D2B" }}>Arisan Terakhir</h3>
+        <div className="p-5 md:p-7 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -z-10"></div>
+          <h3 className="text-lg font-bold mb-5 text-slate-900">Arisan Terakhir</h3>
           {pemenangTerbaru ? (
-            <div className="flex items-center gap-3">
-              <Stempel label="PEMENANG" />
+            <div className="flex items-center gap-4 bg-amber-50/50 p-4 rounded-xl border border-amber-100">
+              <div className="w-12 h-12 flex items-center justify-center bg-amber-100 rounded-full text-xl shadow-inner shrink-0">🏆</div>
               <div>
-                <div className="font-medium" style={{ color: "#1F3D2B" }}>{pemenangTerbaru.NamaAnggota}</div>
-                <div className="text-xs" style={{ color: "#6B6A5E" }}>Bulan {bulanLabel(pemenangTerbaru.Bulan)}</div>
+                <div className="font-bold text-slate-900 text-lg">{pemenangTerbaru.NamaAnggota}</div>
+                <div className="text-xs text-amber-800 font-medium mt-0.5">Pemenang Bulan {bulanLabel(pemenangTerbaru.Bulan)}</div>
               </div>
             </div>
-          ) : <p className="text-sm" style={{ color: "#6B6A5E" }}>Belum ada data pemenang.</p>}
-          <p className="text-xs mt-4" style={{ color: "#6B6A5E" }}>Kocok arisan dilakukan manual saat pertemuan bulanan. Hasilnya dicatat di sini oleh pengurus.</p>
+          ) : <p className="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl text-center">Belum ada data pemenang.</p>}
+          <p className="text-[11px] mt-6 text-slate-400 leading-relaxed">Kocok arisan dilakukan manual saat pertemuan rutin bulanan. Pencatatan digital dilakukan oleh admin pasca pertemuan.</p>
         </div>
       </div>
     </div>
@@ -511,26 +428,28 @@ function AnggotaTab({ anggota }) {
   const [q, setQ] = useState("");
   const filtered = anggota.filter((a) => a.Nama?.toLowerCase().includes(q.toLowerCase()));
   return (
-    <div>
-      <SectionHeader eyebrow="Registrasi" title="Data Anggota" desc="Riwayat lengkap setiap anggota tercatat dan bisa ditelusuri kapan saja." />
-      <input placeholder="Cari nama anggota..." value={q} onChange={(e) => setQ(e.target.value)}
-        className="mb-4 px-3 py-2 rounded-lg border text-sm w-full max-w-xs" style={{ borderColor: "#E4DFD0" }} />
-      <div className="rounded-xl border overflow-x-auto" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
-        <table>
-          <thead className="ledger-head"><tr><th>ID</th><th>Nama</th><th>No. HP</th><th>Luas Lahan</th><th>Komoditas</th><th>Status</th></tr></thead>
-          <tbody>
-            {filtered.map((a) => (
-              <tr key={a.ID} className="ledger-row">
-                <td style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#8FA383" }}>{a.ID}</td>
-                <td className="font-medium">{a.Nama}</td>
-                <td>{a.NoHP}</td>
-                <td>{a.LuasLahan_Ha} Ha</td>
-                <td>{a.Komoditas}</td>
-                <td><Badge tone={a.Status === "Aktif" ? "good" : "neutral"}>{a.Status}</Badge></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="animate-[fadeIn_0.3s_ease-out]">
+      <SectionHeader eyebrow="Database" title="Data Anggota" desc="Daftar seluruh anggota kelompok tani terdaftar." />
+      <input placeholder="🔍 Cari nama anggota..." value={q} onChange={(e) => setQ(e.target.value)}
+        className="mb-6 px-4 py-2.5 rounded-xl border border-slate-200 text-sm w-full md:max-w-md focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm" />
+      <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto hide-scroll">
+          <table className="ledger-table">
+            <thead className="ledger-head"><tr><th>ID</th><th>Nama Lengkap</th><th>No. HP</th><th>Lahan</th><th>Komoditas</th><th>Status</th></tr></thead>
+            <tbody>
+              {filtered.map((a) => (
+                <tr key={a.ID} className="ledger-row">
+                  <td className="font-mono text-slate-400 text-xs">{a.ID}</td>
+                  <td className="font-semibold text-slate-800">{a.Nama}</td>
+                  <td className="text-slate-600 font-mono text-xs">{a.NoHP}</td>
+                  <td className="text-slate-600">{a.LuasLahan_Ha} Ha</td>
+                  <td className="text-slate-600">{a.Komoditas}</td>
+                  <td><Badge tone={a.Status === "Aktif" ? "good" : "neutral"}>{a.Status}</Badge></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -538,7 +457,7 @@ function AnggotaTab({ anggota }) {
 
 // ================= PUPUK =================
 function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi }) {
-  const [form, setForm] = useState({ tanggal: new Date().toISOString().slice(0, 10), jumlahPerOrang: 50, keterangan: "", kuota: Math.ceil(antreanPupuk.length / 2) });
+  const [form, setForm] = useState({ tanggal: new Date().toISOString().slice(0, 10), jumlahPerOrang: 50, keterangan: "", kuota: Math.ceil(antreanPupuk.length / 2) || 1 });
   const [pilihan, setPilihan] = useState(() => new Set(antreanPupuk.slice(0, form.kuota).map((a) => a.id)));
   const [showForm, setShowForm] = useState(false);
 
@@ -548,279 +467,237 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi }) {
   }
 
   return (
-    <div>
-      <SectionHeader eyebrow="Rotasi Adil" title="Jatah Pupuk Phonska" desc="Saat stok terbatas, giliran ditentukan otomatis berdasarkan riwayat — bukan pilih-pilih. Semua anggota bisa melihat urutannya." />
+    <div className="animate-[fadeIn_0.3s_ease-out]">
+      <SectionHeader eyebrow="Distribusi" title="Jatah Pupuk Phonska" desc="Sistem antrean cerdas untuk memastikan distribusi pupuk merata saat stok terbatas." />
 
       {isAdmin && (
-        <div className="mb-6">
+        <div className="mb-8">
           {!showForm ? (
-            <button onClick={() => setShowForm(true)} className="px-4 py-2.5 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>
+            <button onClick={() => setShowForm(true)} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-brand-600 text-white hover:bg-brand-700 shadow-sm shadow-brand-200 transition-colors">
               + Catat Distribusi Baru
             </button>
           ) : (
-            <div className="p-5 rounded-xl border" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
-              <h3 className="font-semibold mb-3" style={{ color: "#1F3D2B" }}>Catat Distribusi Pupuk</h3>
-              <div className="grid sm:grid-cols-3 gap-3 mb-4">
+            <div className="p-5 md:p-7 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-lg mb-5 text-slate-900">Form Distribusi Pupuk</h3>
+              <div className="grid md:grid-cols-3 gap-4 mb-5">
                 <div>
-                  <label className="block text-xs font-medium mb-1">Tanggal</label>
-                  <input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+                  <label className="block text-xs font-semibold mb-1.5 text-slate-600">Tanggal</label>
+                  <input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Kg per orang yang dapat</label>
-                  <input type="number" value={form.jumlahPerOrang} onChange={(e) => setForm({ ...form, jumlahPerOrang: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+                  <label className="block text-xs font-semibold mb-1.5 text-slate-600">Kg / Orang</label>
+                  <input type="number" value={form.jumlahPerOrang} onChange={(e) => setForm({ ...form, jumlahPerOrang: Number(e.target.value) })} className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Jumlah orang yang kebagian (stok cukup untuk)</label>
-                  <input type="number" min={0} max={antreanPupuk.length} value={form.kuota}
-                    onChange={(e) => syncKuota(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+                  <label className="block text-xs font-semibold mb-1.5 text-slate-600">Kuota (Berapa Orang)</label>
+                  <input type="number" min={1} max={antreanPupuk.length} value={form.kuota} onChange={(e) => syncKuota(Number(e.target.value))} className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
               </div>
-              <label className="block text-xs font-medium mb-1">Keterangan</label>
-              <input value={form.keterangan} onChange={(e) => setForm({ ...form, keterangan: e.target.value })}
-                placeholder="mis. Distribusi bulan Agustus" className="w-full mb-4 px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+              <label className="block text-xs font-semibold mb-1.5 text-slate-600">Keterangan (Opsional)</label>
+              <input value={form.keterangan} onChange={(e) => setForm({ ...form, keterangan: e.target.value })} placeholder="mis. Distribusi Kuota Agustus" className="w-full mb-5 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
 
-              <p className="text-xs mb-2" style={{ color: "#6B6A5E" }}>Sistem sudah memilih {form.kuota} anggota paling lama tidak dapat. Bisa disesuaikan manual jika perlu:</p>
-              <div className="max-h-56 overflow-y-auto rounded-lg border mb-4" style={{ borderColor: "#E4DFD0" }}>
-                {antreanPupuk.map((a) => (
-                  <label key={a.id} className="flex items-center gap-2 px-3 py-2 text-sm" style={{ borderBottom: "1px solid #EFEADC" }}>
-                    <input type="checkbox" checked={pilihan.has(a.id)} onChange={(e) => {
-                      const next = new Set(pilihan);
-                      e.target.checked ? next.add(a.id) : next.delete(a.id);
-                      setPilihan(next);
-                    }} />
-                    {a.nama} <span className="text-xs" style={{ color: "#8FA383" }}>({a.terakhir ? `terakhir ${formatTanggal(a.terakhir)}` : "belum pernah"})</span>
-                  </label>
-                ))}
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 mb-6">
+                 <p className="text-xs font-medium text-slate-600 mb-3">Otomatis memilih {form.kuota} anggota paling lama tidak dapat. Sesuaikan centang jika perlu:</p>
+                 <div className="max-h-48 overflow-y-auto hide-scroll space-y-2">
+                   {antreanPupuk.map((a) => (
+                     <label key={a.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 cursor-pointer transition-colors">
+                       <input type="checkbox" checked={pilihan.has(a.id)} className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" onChange={(e) => {
+                         const next = new Set(pilihan); e.target.checked ? next.add(a.id) : next.delete(a.id); setPilihan(next);
+                       }} />
+                       <span className="text-sm font-medium text-slate-700">{a.nama}</span>
+                       <span className="text-[10px] bg-slate-200 px-2 py-0.5 rounded text-slate-600 ml-auto">{a.terakhir ? formatTanggal(a.terakhir) : "Belum Pernah"}</span>
+                     </label>
+                   ))}
+                 </div>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-sm border" style={{ borderColor: "#E4DFD0" }}>Batal</button>
-                <button
-                  onClick={() => { onDistribusi({ ...form, anggotaIdTerpilih: JSON.stringify([...pilihan]) }); setShowForm(false); }}
-                  className="px-4 py-2 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>
-                  Simpan Distribusi
-                </button>
+              <div className="flex gap-3">
+                <button onClick={() => setShowForm(false)} className="px-5 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
+                <button onClick={() => { onDistribusi({ ...form, anggotaIdTerpilih: JSON.stringify([...pilihan]) }); setShowForm(false); }} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-colors shadow-sm shadow-brand-200">Simpan Distribusi</button>
               </div>
             </div>
           )}
         </div>
       )}
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-6 md:gap-8">
         <div>
-          <h3 className="text-sm font-semibold mb-2 uppercase tracking-wide" style={{ color: "#8FA383", fontFamily: "'IBM Plex Mono', monospace" }}>Urutan Antrean Saat Ini</h3>
-          <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+          <h3 className="text-xs font-bold mb-3 uppercase tracking-widest text-slate-500 font-mono">Urutan Antrean Saat Ini</h3>
+          <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
             {antreanPupuk.map((a, i) => (
-              <div key={a.id} className="flex items-center justify-between px-4 py-3 text-sm" style={{ borderBottom: "1px solid #EFEADC" }}>
-                <span><span style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#8FA383" }}>{String(i + 1).padStart(2, "0")}</span> &nbsp;{a.nama}</span>
-                <span className="text-xs" style={{ color: "#6B6A5E" }}>{a.terakhir ? formatTanggal(a.terakhir) : "belum pernah dapat"}</span>
+              <div key={a.id} className="flex items-center justify-between p-4 text-sm border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                <span className="font-semibold text-slate-700"><span className="font-mono text-slate-400 mr-3 text-xs">{String(i + 1).padStart(2, "0")}</span>{a.nama}</span>
+                <span className="text-xs text-slate-500">{a.terakhir ? formatTanggal(a.terakhir) : "Belum pernah"}</span>
               </div>
             ))}
           </div>
         </div>
         <div>
-          <h3 className="text-sm font-semibold mb-2 uppercase tracking-wide" style={{ color: "#8FA383", fontFamily: "'IBM Plex Mono', monospace" }}>Riwayat Distribusi</h3>
-          <div className="rounded-xl border overflow-hidden max-h-[420px] overflow-y-auto" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
-            <table>
-              <thead className="ledger-head" style={{ position: "sticky", top: 0, background: "#FFFEFB" }}><tr><th>Tanggal</th><th>Nama</th><th>Kg</th><th>Status</th></tr></thead>
-              <tbody>
-                {[...riwayat].reverse().map((r, idx) => (
-                  <tr key={r.ID || idx} className="ledger-row">
-                    <td className="text-xs">{formatTanggal(r.Tanggal)}</td>
-                    <td>{r.NamaAnggota}</td>
-                    <td>{r.Jumlah_Kg || "-"}</td>
-                    <td><Badge tone={r.Status === "Dapat" ? "good" : "warn"}>{r.Status}</Badge></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ================= ARISAN =================
-function ArisanTab({ arisan, anggota, isAdmin, onCatat }) {
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ bulan: new Date().toISOString().slice(0, 7), anggotaId: anggota[0]?.ID || "", statusBayar: "Lunas", nominal: 50000, pemenang: "N" });
-
-  const byBulan = useMemo(() => {
-    const map = {};
-    arisan.forEach((a) => { (map[a.Bulan] = map[a.Bulan] || []).push(a); });
-    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
-  }, [arisan]);
-
-  return (
-    <div>
-      <SectionHeader eyebrow="Kocok Manual, Catat Digital" title="Arisan Bulanan" desc="Pengocokan dilakukan langsung saat pertemuan kelompok. Di sini hanya dicatat siapa bayar dan siapa menang." />
-
-      {isAdmin && (
-        <div className="mb-6">
-          {!showForm ? (
-            <button onClick={() => setShowForm(true)} className="px-4 py-2.5 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>+ Catat Data Arisan</button>
-          ) : (
-            <div className="p-5 rounded-xl border grid sm:grid-cols-2 gap-3" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
-              <div>
-                <label className="block text-xs font-medium mb-1">Bulan</label>
-                <input type="month" value={form.bulan} onChange={(e) => setForm({ ...form, bulan: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1">Anggota</label>
-                <select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}>
-                  {anggota.map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1">Status Bayar</label>
-                <select value={form.statusBayar} onChange={(e) => setForm({ ...form, statusBayar: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}>
-                  <option>Lunas</option><option>Belum</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1">Nominal</label>
-                <input type="number" value={form.nominal} onChange={(e) => setForm({ ...form, nominal: Number(e.target.value) })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
-              </div>
-              <div className="sm:col-span-2 flex items-center gap-2">
-                <input type="checkbox" checked={form.pemenang === "Y"} onChange={(e) => setForm({ ...form, pemenang: e.target.checked ? "Y" : "N" })} />
-                <label className="text-sm">Anggota ini pemenang kocokan bulan tersebut</label>
-              </div>
-              <div className="sm:col-span-2 flex gap-2 mt-1">
-                <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-sm border" style={{ borderColor: "#E4DFD0" }}>Batal</button>
-                <button onClick={() => { onCatat(form); setShowForm(false); }} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>Simpan</button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="space-y-6">
-        {byBulan.map(([bulan, rows]) => (
-          <div key={bulan} className="rounded-xl border overflow-hidden" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
-            <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "#F4EFE2" }}>
-              <span className="font-medium text-sm" style={{ color: "#1F3D2B" }}>{bulanLabel(bulan)}</span>
-              {rows.find((r) => r.Pemenang === "Y") && (
-                <span className="text-xs flex items-center gap-1" style={{ color: "#7A4B2A" }}>🏆 {rows.find((r) => r.Pemenang === "Y").NamaAnggota}</span>
-              )}
-            </div>
-            <table>
-              <tbody>
-                {rows.map((r, i) => (
-                  <tr key={r.ID || i} className="ledger-row">
-                    <td className="font-medium">{r.NamaAnggota}</td>
-                    <td>{formatRupiah(r.Nominal)}</td>
-                    <td><Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge></td>
-                    <td>{r.Pemenang === "Y" && <Badge tone="warn">Pemenang</Badge>}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ================= IURAN =================
-function IuranTab({ iuran, anggota, isAdmin, onCatat }) {
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ bulan: new Date().toISOString().slice(0, 7), anggotaId: anggota[0]?.ID || "", statusBayar: "Lunas", nominal: 25000 });
-
-  const byBulan = useMemo(() => {
-    const map = {};
-    iuran.forEach((a) => { (map[a.Bulan] = map[a.Bulan] || []).push(a); });
-    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
-  }, [iuran]);
-
-  return (
-    <div>
-      <SectionHeader eyebrow="Kas Kelompok" title="Iuran Wajib" desc="Status pembayaran setiap anggota, per bulan, terlihat oleh semua." />
-
-      {isAdmin && (
-        <div className="mb-6">
-          {!showForm ? (
-            <button onClick={() => setShowForm(true)} className="px-4 py-2.5 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>+ Catat Pembayaran Iuran</button>
-          ) : (
-            <div className="p-5 rounded-xl border grid sm:grid-cols-2 gap-3" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
-              <div>
-                <label className="block text-xs font-medium mb-1">Bulan</label>
-                <input type="month" value={form.bulan} onChange={(e) => setForm({ ...form, bulan: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1">Anggota</label>
-                <select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}>
-                  {anggota.map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1">Status Bayar</label>
-                <select value={form.statusBayar} onChange={(e) => setForm({ ...form, statusBayar: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}>
-                  <option>Lunas</option><option>Belum</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1">Nominal</label>
-                <input type="number" value={form.nominal} onChange={(e) => setForm({ ...form, nominal: Number(e.target.value) })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
-              </div>
-              <div className="sm:col-span-2 flex gap-2 mt-1">
-                <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-sm border" style={{ borderColor: "#E4DFD0" }}>Batal</button>
-                <button onClick={() => { onCatat(form); setShowForm(false); }} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>Simpan</button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="space-y-6">
-        {byBulan.map(([bulan, rows]) => {
-          const lunas = rows.filter((r) => r.StatusBayar === "Lunas").length;
-          return (
-            <div key={bulan} className="rounded-xl border overflow-hidden" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
-              <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "#F4EFE2" }}>
-                <span className="font-medium text-sm" style={{ color: "#1F3D2B" }}>{bulanLabel(bulan)}</span>
-                <span className="text-xs" style={{ color: "#6B6A5E" }}>{lunas}/{rows.length} sudah bayar</span>
-              </div>
-              <table>
+          <h3 className="text-xs font-bold mb-3 uppercase tracking-widest text-slate-500 font-mono">Riwayat Tersalurkan</h3>
+          <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden h-[400px] flex flex-col">
+            <div className="overflow-auto hide-scroll flex-1">
+              <table className="ledger-table min-w-full">
+                <thead className="ledger-head sticky top-0 bg-white shadow-sm z-10"><tr><th>Tanggal</th><th>Nama</th><th>Kg</th><th>Status</th></tr></thead>
                 <tbody>
-                  {rows.map((r, i) => (
-                    <tr key={r.ID || i} className="ledger-row">
-                      <td className="font-medium">{r.NamaAnggota}</td>
-                      <td>{formatRupiah(r.Nominal)}</td>
-                      <td><Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge></td>
+                  {[...riwayat].reverse().map((r, idx) => (
+                    <tr key={r.ID || idx} className="ledger-row">
+                      <td className="text-xs text-slate-500 whitespace-nowrap">{formatTanggal(r.Tanggal)}</td>
+                      <td className="font-medium text-slate-800">{r.NamaAnggota}</td>
+                      <td className="text-slate-600">{r.Jumlah_Kg || "-"}</td>
+                      <td><Badge tone={r.Status === "Dapat" ? "good" : "warn"}>{r.Status}</Badge></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          );
-        })}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-// ================= PENGATURAN =================
-function PengaturanTab({ apiUrlDraft, setApiUrlDraft, onSave, isConnected }) {
+// ================= KEUANGAN (GABUNGAN ARISAN & IURAN) =================
+function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat }) {
+  const [form, setForm] = useState({
+    bulan: new Date().toISOString().slice(0, 7),
+    anggotaId: anggota[0]?.ID || "",
+    bayarIuran: false,
+    bayarArisan: false,
+    pemenangArisan: false
+  });
+
+  const handleSubmit = () => {
+    if (!form.bayarIuran && !form.bayarArisan && !form.pemenangArisan) {
+      alert("Centang minimal satu aktivitas untuk disimpan!");
+      return;
+    }
+    onCatat(form);
+    // Reset ceklis setelah submit
+    setForm({...form, bayarIuran: false, bayarArisan: false, pemenangArisan: false});
+  };
+
+  // Group data by bulan for rendering
+  const arisanByBulan = useMemo(() => {
+    const map = {}; arisan.forEach((a) => { (map[a.Bulan] = map[a.Bulan] || []).push(a); });
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [arisan]);
+
+  const iuranByBulan = useMemo(() => {
+    const map = {}; iuran.forEach((a) => { (map[a.Bulan] = map[a.Bulan] || []).push(a); });
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [iuran]);
+
   return (
-    <div>
-      <SectionHeader eyebrow="Koneksi Data" title="Pengaturan" desc="Hubungkan aplikasi ke Google Sheets kelompok tani lewat URL Apps Script." />
-      <div className="p-5 rounded-xl border max-w-xl" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
-        <label className="block text-xs font-medium mb-1">URL Web App (Google Apps Script)</label>
-        <input value={apiUrlDraft} onChange={(e) => setApiUrlDraft(e.target.value)} placeholder="https://script.google.com/macros/s/xxxxx/exec"
-          className="w-full mb-3 px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0", fontFamily: "'IBM Plex Mono', monospace" }} />
-        <button onClick={onSave} className="px-4 py-2.5 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>Simpan & Sambungkan</button>
-        <p className="text-xs mt-3" style={{ color: "#6B6A5E" }}>
-          Status saat ini: {isConnected ? "✅ Tersambung ke Google Sheets" : "⚠️ Mode demo — data tidak tersimpan permanen"}
-        </p>
-        <div className="mt-5 pt-4 text-xs space-y-1" style={{ borderTop: "1px solid #EFEADC", color: "#6B6A5E" }}>
-          <p className="font-medium" style={{ color: "#4A4436" }}>Cara mendapatkan URL:</p>
-          <p>1. Buka file Code.gs yang sudah disiapkan</p>
-          <p>2. Ikuti langkah pemasangan di bagian atas file tersebut</p>
-          <p>3. Setelah deploy, salin URL web app ke kolom di atas</p>
+    <div className="animate-[fadeIn_0.3s_ease-out]">
+      <SectionHeader eyebrow="Buku Kas" title="Arisan & Iuran Wajib" desc="Pantau status pembayaran arisan dan iuran wajib bulanan dalam satu tampilan terpusat." />
+
+      {isAdmin && (
+        <div className="mb-8 p-5 md:p-7 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100px] -z-10"></div>
+          <h3 className="font-bold text-lg mb-5 text-slate-900">Catat Pembayaran Bulanan</h3>
+          
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-slate-600">Pilih Bulan</label>
+              <input type="month" value={form.bulan} onChange={(e) => setForm({ ...form, bulan: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none bg-white" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-slate-600">Pilih Anggota</label>
+              <select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none bg-white font-medium">
+                {anggota.map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 p-4 md:p-5 rounded-xl border border-slate-100 mb-6">
+            <label className="block text-xs font-bold tracking-widest uppercase mb-4 text-slate-400 font-mono">Tandai Aktivitas (Ceklis yang sesuai)</label>
+            <div className="flex flex-col md:flex-row gap-3 md:gap-6">
+              <label className="flex items-center gap-3 cursor-pointer p-3 bg-white border border-slate-200 rounded-lg flex-1 shadow-sm hover:border-brand-300 transition-colors">
+                <input type="checkbox" checked={form.bayarIuran} onChange={(e) => setForm({ ...form, bayarIuran: e.target.checked })} className="w-5 h-5 rounded text-brand-600 focus:ring-brand-500" />
+                <span className="text-sm font-semibold text-slate-700">Sudah Bayar Iuran<br/><span className="text-xs text-slate-400 font-normal">Rp 25.000</span></span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer p-3 bg-white border border-slate-200 rounded-lg flex-1 shadow-sm hover:border-brand-300 transition-colors">
+                <input type="checkbox" checked={form.bayarArisan} onChange={(e) => setForm({ ...form, bayarArisan: e.target.checked })} className="w-5 h-5 rounded text-brand-600 focus:ring-brand-500" />
+                <span className="text-sm font-semibold text-slate-700">Sudah Bayar Arisan<br/><span className="text-xs text-slate-400 font-normal">Rp 50.000</span></span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer p-3 bg-amber-50/50 border border-amber-200 rounded-lg flex-1 shadow-sm hover:border-amber-400 transition-colors">
+                <input type="checkbox" checked={form.pemenangArisan} onChange={(e) => setForm({ ...form, pemenangArisan: e.target.checked })} className="w-5 h-5 rounded text-amber-500 focus:ring-amber-500" />
+                <span className="text-sm font-semibold text-amber-900">Menang Arisan<br/><span className="text-xs text-amber-700 font-normal">Bulan ini</span></span>
+              </label>
+            </div>
+          </div>
+          
+          <button onClick={handleSubmit} className="w-full md:w-auto px-8 py-3 rounded-xl text-sm font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-colors shadow-sm shadow-brand-200">Simpan Data Kas</button>
+        </div>
+      )}
+
+      {/* Side-by-side Tables */}
+      <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
+        {/* KOLOM IURAN */}
+        <div>
+          <h3 className="text-lg font-bold mb-4 text-slate-900 flex items-center gap-2">
+             <span className="w-2 h-6 bg-brand-500 rounded-full inline-block"></span> Iuran Wajib
+          </h3>
+          <div className="space-y-6">
+            {iuranByBulan.map(([bulan, rows]) => {
+              const lunas = rows.filter((r) => r.StatusBayar === "Lunas").length;
+              return (
+                <div key={`iuran-${bulan}`} className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="px-5 py-3.5 flex items-center justify-between bg-slate-50 border-b border-slate-100">
+                    <span className="font-bold text-sm text-slate-800">{bulanLabel(bulan)}</span>
+                    <span className="text-xs font-semibold px-2.5 py-1 bg-white border border-slate-200 rounded-md text-slate-600">{lunas} Lunas</span>
+                  </div>
+                  <div className="overflow-x-auto hide-scroll">
+                    <table className="ledger-table">
+                      <tbody>
+                        {rows.map((r, i) => (
+                          <tr key={r.ID || i} className="ledger-row">
+                            <td className="font-semibold">{r.NamaAnggota}</td>
+                            <td className="text-slate-500">{formatRupiah(r.Nominal)}</td>
+                            <td className="text-right"><Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* KOLOM ARISAN */}
+        <div>
+          <h3 className="text-lg font-bold mb-4 text-slate-900 flex items-center gap-2">
+            <span className="w-2 h-6 bg-amber-400 rounded-full inline-block"></span> Arisan Bulanan
+          </h3>
+          <div className="space-y-6">
+            {arisanByBulan.map(([bulan, rows]) => (
+              <div key={`arisan-${bulan}`} className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-3.5 flex items-center justify-between bg-slate-50 border-b border-slate-100">
+                  <span className="font-bold text-sm text-slate-800">{bulanLabel(bulan)}</span>
+                  {rows.find((r) => r.Pemenang === "Y") && (
+                    <span className="text-xs font-bold flex items-center gap-1.5 text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
+                       🏆 {rows.find((r) => r.Pemenang === "Y").NamaAnggota}
+                    </span>
+                  )}
+                </div>
+                <div className="overflow-x-auto hide-scroll">
+                  <table className="ledger-table">
+                    <tbody>
+                      {rows.map((r, i) => (
+                        <tr key={r.ID || i} className="ledger-row">
+                          <td className="font-semibold">{r.NamaAnggota}</td>
+                          <td className="text-slate-500">{formatRupiah(r.Nominal)}</td>
+                          <td><Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
