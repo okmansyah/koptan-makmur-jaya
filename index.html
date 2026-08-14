@@ -2,11 +2,11 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Kelompok Tani Sumber Makmur</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Kelompok Tani Makmur Jaya</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -20,9 +20,12 @@
         },
         colors: {
           brand: {
-            50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d',
+            50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b', 950: '#022c22'
           },
-          surface: '#F8FAFC'
+          accent: {
+            500: '#f59e0b', 600: '#d97706',
+          },
+          surface: '#F4F7F6'
         }
       }
     }
@@ -40,14 +43,18 @@
 </script>
 
 <style>
-  body { margin: 0; background-color: #F8FAFC; -webkit-tap-highlight-color: transparent; }
-  ::selection { background: #16a34a; color: white; }
+  body { margin: 0; background-color: #F4F7F6; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+  ::selection { background: #059669; color: white; }
   .ledger-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 600px; }
-  .ledger-row td { border-bottom: 1px solid #E2E8F0; padding: 12px 16px; font-size: 14px; color: #334155; transition: background 0.2s; }
-  .ledger-row:hover td { background: #F1F5F9; }
-  .ledger-head th { text-align: left; padding: 12px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748B; border-bottom: 2px solid #CBD5E1; font-family: 'IBM Plex Mono', monospace; font-weight: 600; background: #F8FAFC;}
+  .ledger-row td { border-bottom: 1px solid #E2E8F0; padding: 14px 16px; font-size: 14px; color: #1E293B; transition: background 0.2s; }
+  .ledger-row:hover td { background: #F8FAFC; }
+  .ledger-head th { text-align: left; padding: 14px 16px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.1em; color: #475569; border-bottom: 2px solid #CBD5E1; font-family: 'IBM Plex Mono', monospace; font-weight: 700; background: #F1F5F9;}
   .hide-scroll::-webkit-scrollbar { display: none; }
   .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+  
+  /* Animasi Dropdown Mobile */
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-slideDown { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 </style>
 </head>
 <body>
@@ -86,19 +93,19 @@ function bulanLabel(b) {
 // ---------- UI Components ----------
 function Badge({ children, tone = "neutral" }) {
   const tones = {
-    neutral: "bg-slate-100 text-slate-700 border-slate-200", good: "bg-brand-50 text-brand-800 border-brand-100",
-    warn: "bg-amber-50 text-amber-800 border-amber-200", bad: "bg-rose-50 text-rose-800 border-rose-200",
+    neutral: "bg-slate-100 text-slate-700 border-slate-200", good: "bg-brand-50 text-brand-800 border-brand-200",
+    warn: "bg-accent-50 text-accent-800 border-accent-200", bad: "bg-rose-50 text-rose-800 border-rose-200",
   };
-  return <span className={`px-2.5 py-1 rounded-md text-[11px] font-medium border ${tones[tone]} font-mono tracking-tight`}>{children}</span>;
+  return <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold border ${tones[tone]} font-mono tracking-tight`}>{children}</span>;
 }
 
 function SectionHeader({ eyebrow, title, desc, action }) {
   return (
-    <div className="mb-6 md:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="mb-8 md:mb-10 flex flex-col md:flex-row md:items-end justify-between gap-5">
       <div>
-        <div className="text-xs tracking-widest uppercase mb-1.5 text-brand-600 font-mono font-semibold">{eyebrow}</div>
-        <h2 className="text-2xl md:text-3xl font-serif font-bold text-slate-900">{title}</h2>
-        {desc && <p className="text-sm text-slate-500 max-w-2xl mt-2 leading-relaxed">{desc}</p>}
+        <div className="text-[11px] tracking-widest uppercase mb-2 text-brand-600 font-mono font-bold">{eyebrow}</div>
+        <h2 className="text-3xl md:text-4xl font-serif font-black text-slate-900 tracking-tight">{title}</h2>
+        {desc && <p className="text-sm text-slate-500 max-w-2xl mt-2.5 font-medium leading-relaxed">{desc}</p>}
       </div>
       {action && <div>{action}</div>}
     </div>
@@ -113,6 +120,7 @@ function App() {
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // State Hamburger Menu
 
   const [anggota, setAnggota] = useState(demoAnggota);
   const [pupukRiwayat, setPupukRiwayat] = useState(demoPupukRiwayat);
@@ -151,9 +159,16 @@ function App() {
   async function handleLogin() {
     const res = await apiCall("login", { username: loginForm.username, password: loginForm.password }, "POST");
     if (res?.success) {
-      setToken(res.token); setLoginOpen(false); showToast("Masuk sebagai admin");
-    } else showToast(res?.message || "Gagal masuk", "bad");
+      setToken(res.token); setLoginOpen(false); showToast("Sesi Admin Terbuka");
+    } else showToast(res?.message || "Kredensial tidak valid", "bad");
   }
+
+  const navItems = [
+    { key: "dashboard", label: "Ringkasan Eksekutif", icon: "M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" },
+    { key: "anggota", label: "Database Anggota", icon: "M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" },
+    { key: "pupuk", label: "Distribusi Pupuk", icon: "M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" },
+    { key: "keuangan", label: "Arisan & Iuran", icon: "M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" }
+  ];
 
   const antreanPupuk = useMemo(() => {
     const aktif = anggota.filter((a) => a.Status === "Aktif");
@@ -183,68 +198,83 @@ function App() {
   return (
     <div className="font-sans bg-surface min-h-screen text-slate-800 flex flex-col md:flex-row relative">
       {toast && (
-        <div className={`fixed top-4 right-4 z-50 px-5 py-3.5 rounded-xl shadow-xl text-sm font-semibold transition-all flex items-center gap-2 ${toast.tone === "bad" ? "bg-rose-600 text-white" : "bg-slate-800 text-white"}`}>
+        <div className={`fixed top-6 right-6 z-[60] px-6 py-4 rounded-xl shadow-2xl text-sm font-bold transition-all flex items-center gap-3 border ${toast.tone === "bad" ? "bg-rose-600 text-white border-rose-500" : "bg-brand-950 text-white border-brand-800"}`}>
           {toast.msg}
         </div>
       )}
 
-      {/* SIDEBAR */}
-      <aside className="w-full md:w-64 shrink-0 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col z-20 sticky top-0 md:h-screen">
-        <div className="p-5 md:p-6 border-b border-slate-100 hidden md:block">
-          <div className="text-[10px] tracking-widest uppercase mb-1.5 text-slate-400 font-mono">Sistem Informasi</div>
-          <div className="font-serif font-bold text-xl text-brand-900 leading-tight">Kelompok Tani<br/>Sumber Makmur</div>
+      {/* SIDEBAR (Desktop) */}
+      <aside className="w-full md:w-72 shrink-0 bg-brand-950 border-r border-brand-900 flex-col z-20 sticky top-0 h-screen hidden md:flex shadow-xl shadow-brand-900/20">
+        <div className="p-8 border-b border-brand-800/50">
+          <div className="text-[10px] tracking-[0.2em] uppercase mb-2 text-brand-400 font-mono font-bold">Portal Sistem</div>
+          <div className="font-serif font-black text-2xl text-white leading-tight tracking-tight">KT Makmur<br/><span className="text-brand-500">Jaya.</span></div>
         </div>
 
-        <nav className="flex md:flex-col gap-1 p-3 md:p-4 overflow-x-auto hide-scroll w-full">
-          {[
-            ["dashboard", "Ringkasan", "M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"],
-            ["anggota", "Data Anggota", "M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"],
-            ["pupuk", "Jatah Pupuk", "M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"],
-            ["keuangan", "Arisan & Iuran", "M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"],
-          ].map(([key, label, svgPath]) => (
-            <button key={key} onClick={() => setTab(key)} className={`flex items-center gap-3 px-4 py-3 md:py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${tab === key ? "bg-brand-50 text-brand-700 shadow-sm border border-brand-100" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-transparent"}`}>
-              <svg className="w-5 h-5 opacity-70" fill="currentColor" viewBox="0 0 20 20"><path d={svgPath} fillRule="evenodd" clipRule="evenodd"></path></svg>
-              {label}
+        <nav className="flex flex-col gap-2 p-5 w-full flex-1">
+          {navItems.map((item) => (
+            <button key={item.key} onClick={() => setTab(item.key)} className={`flex items-center gap-4 px-5 py-3.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap w-full text-left ${tab === item.key ? "bg-brand-600 text-white shadow-lg shadow-brand-900/50" : "text-brand-300 hover:bg-brand-800/50 hover:text-white"}`}>
+              <svg className="w-5 h-5 opacity-80" fill="currentColor" viewBox="0 0 20 20"><path d={item.icon} fillRule="evenodd" clipRule="evenodd"></path></svg>
+              {item.label}
             </button>
           ))}
         </nav>
 
-        <div className="p-4 mt-auto border-t border-slate-100 hidden md:block">
+        <div className="p-5 mt-auto border-t border-brand-800/50 bg-brand-900/20">
           {isAdmin ? (
-            <div className="bg-slate-50 px-4 py-3.5 rounded-xl border border-slate-200">
-              <span className="flex items-center gap-2 text-xs font-bold text-slate-800 mb-2"><div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div> Mode Admin</span>
-              <button onClick={() => setToken(null)} className="w-full text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 py-2 rounded-lg transition-colors">Tutup Sesi (Logout)</button>
+            <div className="bg-brand-800/50 px-5 py-4 rounded-xl border border-brand-700/50 backdrop-blur">
+              <span className="flex items-center gap-2 text-xs font-bold text-white mb-3"><div className="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div> Admin Aktif</span>
+              <button onClick={() => setToken(null)} className="w-full text-xs font-bold text-rose-400 bg-rose-950/50 hover:bg-rose-900 border border-rose-800/50 py-2.5 rounded-lg transition-colors">Logout Sistem</button>
             </div>
           ) : (
-            <button onClick={() => setLoginOpen(true)} className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors border border-slate-200">
-              Akses Admin
+            <button onClick={() => setLoginOpen(true)} className="w-full px-5 py-3.5 rounded-xl text-sm font-bold bg-white text-brand-900 hover:bg-brand-50 transition-colors shadow-lg">
+              Login Administrator
             </button>
           )}
         </div>
       </aside>
 
-      {/* MOBILE HEADER */}
-      <div className="md:hidden flex items-center justify-between px-5 py-4 bg-white border-b border-slate-200 z-10 sticky top-[64px]">
-         <div className="font-serif font-bold text-lg text-brand-900">KT Sumber Makmur</div>
-         {isAdmin ? (
-            <button onClick={() => setToken(null)} className="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-lg">Logout</button>
-         ) : (
-            <button onClick={() => setLoginOpen(true)} className="text-[11px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg">Admin</button>
-         )}
+      {/* MOBILE HEADER & HAMBURGER */}
+      <div className="md:hidden flex items-center justify-between px-5 py-4 bg-brand-950 text-white border-b border-brand-900 z-40 sticky top-0 shadow-lg">
+         <div className="font-serif font-black text-xl tracking-tight">KTMJ<span className="text-brand-500">.</span></div>
+         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 -mr-2 focus:outline-none text-brand-100 hover:text-white transition-colors">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+               ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" />
+               )}
+            </svg>
+         </button>
       </div>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 p-5 md:p-8 lg:p-10 max-w-6xl overflow-x-hidden">
-        {loading && <div className="fixed inset-0 bg-slate-900/10 backdrop-blur-[1px] z-40 flex items-center justify-center"><div className="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin shadow-lg"></div></div>}
+      {/* MOBILE DROPDOWN MENU */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-30 bg-brand-950/80 backdrop-blur-md pt-[72px]" onClick={() => setMobileMenuOpen(false)}>
+          <div className="bg-brand-900 shadow-2xl rounded-b-3xl border-t border-brand-800 p-5 flex flex-col gap-2 animate-slideDown overflow-hidden" onClick={(e) => e.stopPropagation()}>
+             {navItems.map((item) => (
+              <button key={item.key} onClick={() => {setTab(item.key); setMobileMenuOpen(false);}} className={`flex items-center gap-4 px-5 py-4 rounded-xl text-sm font-bold transition-all w-full text-left ${tab === item.key ? "bg-brand-600 text-white" : "text-brand-200"}`}>
+                <svg className="w-5 h-5 opacity-80" fill="currentColor" viewBox="0 0 20 20"><path d={item.icon} fillRule="evenodd" clipRule="evenodd"></path></svg>
+                {item.label}
+              </button>
+            ))}
+            <div className="mt-4 pt-4 border-t border-brand-800/50">
+              {isAdmin ? (
+                 <button onClick={() => {setToken(null); setMobileMenuOpen(false);}} className="w-full text-sm font-bold text-rose-300 bg-rose-950/50 border border-rose-900 py-3.5 rounded-xl">Logout Sistem</button>
+              ) : (
+                 <button onClick={() => {setLoginOpen(true); setMobileMenuOpen(false);}} className="w-full text-sm font-bold text-brand-900 bg-white shadow-lg py-3.5 rounded-xl">Login Administrator</button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MAIN CONTENT (Padding bawah ditambah agar tidak tertutup footer) */}
+      <main className="flex-1 p-5 md:p-8 lg:p-12 max-w-6xl overflow-x-hidden pb-24 md:pb-20">
+        {loading && <div className="fixed inset-0 bg-white/40 backdrop-blur-[2px] z-[55] flex items-center justify-center"><div className="w-12 h-12 border-4 border-brand-600 border-t-transparent rounded-full animate-spin shadow-xl"></div></div>}
 
         {tab === "dashboard" && <Dashboard stats={stats} antreanPupuk={antreanPupuk} arisan={arisan} />}
         {tab === "anggota" && (
-          <AnggotaTab 
-            anggota={anggota} isAdmin={isAdmin} 
-            apiCall={apiCall} 
-            onRefresh={async () => { const a = await apiCall("getAnggota"); if (a?.success) setAnggota(a.data); }} 
-            showToast={showToast} 
-          />
+          <AnggotaTab anggota={anggota} isAdmin={isAdmin} apiCall={apiCall} onRefresh={async () => { const a = await apiCall("getAnggota"); if (a?.success) setAnggota(a.data); }} showToast={showToast} />
         )}
         {tab === "pupuk" && (
           <PupukTab antreanPupuk={antreanPupuk} riwayat={pupukRiwayat} isAdmin={isAdmin}
@@ -267,7 +297,7 @@ function App() {
                 if (res?.success) successCount++; else errorMsg += "Gagal catat arisan. ";
               }
               if (successCount > 0) {
-                showToast("Pencatatan keuangan berhasil");
+                showToast("Data Keuangan Diperbarui!");
                 const [ar, ir] = await Promise.all([apiCall("getArisan"), apiCall("getIuran")]);
                 if (ar?.success) setArisan(ar.data); if (ir?.success) setIuran(ir.data);
               } else if (errorMsg) showToast(errorMsg, "bad");
@@ -276,24 +306,29 @@ function App() {
         )}
       </main>
 
+      {/* FLOATING FOOTER */}
+      <footer className="fixed bottom-0 left-0 right-0 z-40 bg-brand-950/95 backdrop-blur-md shadow-[0_-4px_10px_rgba(0,0,0,0.15)] text-brand-100 text-[9px] md:text-xs py-3 text-center font-mono tracking-widest border-t border-brand-800">
+         KELOMPOK TANI MAKMUR JAYA <span className="opacity-40 mx-1 md:mx-3">||</span> SAMBIREJO <span className="opacity-40 mx-1 md:mx-3">||</span> 2026 <span className="opacity-40 mx-1 md:mx-3">||</span> Created By Okmansyah Script
+      </footer>
+
       {/* LOGIN MODAL */}
       {loginOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-3xl p-8 bg-white shadow-2xl border border-slate-100 animate-[fadeIn_0.2s_ease-out]">
-            <h3 className="text-2xl mb-1 font-serif font-bold text-slate-900">Akses Admin</h3>
-            <p className="text-sm mb-6 text-slate-500">Silakan masukkan kredensial Anda.</p>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-brand-950/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-[2rem] p-8 bg-white shadow-2xl border border-slate-100 animate-slideDown">
+            <h3 className="text-3xl mb-2 font-serif font-black text-slate-900 tracking-tight">Otorisasi</h3>
+            <p className="text-sm mb-8 text-slate-500 font-medium">Sistem terenkripsi khusus pengurus.</p>
             
-            <label className="block text-xs font-bold mb-2 text-slate-700">Username</label>
-            <input className="w-full mb-4 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all"
+            <label className="block text-xs font-bold mb-2 text-slate-700 tracking-wide uppercase">ID Pengguna</label>
+            <input className="w-full mb-5 px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-semibold"
               value={loginForm.username} onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })} />
             
-            <label className="block text-xs font-bold mb-2 text-slate-700">Password</label>
-            <input type="password" className="w-full mb-8 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all"
+            <label className="block text-xs font-bold mb-2 text-slate-700 tracking-wide uppercase">Kata Sandi</label>
+            <input type="password" className="w-full mb-8 px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-semibold"
               value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} />
             
-            <div className="flex gap-3">
-              <button onClick={() => setLoginOpen(false)} className="flex-1 px-4 py-3 rounded-xl text-sm font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
-              <button onClick={handleLogin} className="flex-1 px-4 py-3 rounded-xl text-sm font-bold bg-brand-600 text-white hover:bg-brand-700 transition-colors shadow-lg shadow-brand-200">Masuk</button>
+            <div className="flex gap-4">
+              <button onClick={() => setLoginOpen(false)} className="flex-1 px-5 py-3.5 rounded-xl text-sm font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
+              <button onClick={handleLogin} className="flex-1 px-5 py-3.5 rounded-xl text-sm font-bold bg-brand-900 text-white hover:bg-brand-950 transition-colors shadow-lg shadow-brand-900/30">Otorisasi</button>
             </div>
           </div>
         </div>
@@ -306,58 +341,58 @@ function App() {
 function Dashboard({ stats, antreanPupuk, arisan }) {
   const pemenangTerbaru = [...arisan].reverse().find((a) => a.Pemenang === "Y");
   return (
-    <div className="animate-[fadeIn_0.3s_ease-out]">
-      <SectionHeader eyebrow="Beranda" title="Kondisi Kelompok Saat Ini" desc="Ringkasan transparansi data kelompok tani yang dapat diakses oleh semua anggota." />
+    <div className="animate-slideDown">
+      <SectionHeader eyebrow="Overview" title="Dashboard Utama" desc="Laporan transparan operasional dan keuangan kelompok tani secara real-time." />
       
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
         {[
           ["Anggota Aktif", stats.totalAnggota, ""],
           ["Pupuk Turun", stats.totalPupuk + " kg", ""],
           ["Kas Arisan", formatRupiah(stats.totalArisan), ""],
           ["Kas Iuran", formatRupiah(stats.totalIuran), ""],
         ].map(([label, val]) => (
-          <div key={label} className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-colors">
-            <div className="text-xs mb-2 text-slate-500 font-bold uppercase tracking-wider">{label}</div>
-            <div className="text-2xl md:text-3xl font-serif font-bold text-slate-900">{val}</div>
+          <div key={label} className="p-6 rounded-[2rem] bg-white border border-slate-200 shadow-sm relative overflow-hidden group hover:border-brand-400 hover:shadow-lg transition-all">
+            <div className="text-xs mb-3 text-slate-500 font-bold uppercase tracking-widest">{label}</div>
+            <div className="text-2xl md:text-4xl font-serif font-black text-brand-950 tracking-tight">{val}</div>
           </div>
         ))}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
-        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm relative overflow-hidden">
-          <div className="absolute -top-6 -right-6 w-32 h-32 bg-brand-50 rounded-full -z-10"></div>
-          <h3 className="text-lg font-bold mb-2 text-slate-900">Antrean Jatah Pupuk</h3>
-          <p className="text-xs mb-6 text-slate-500 font-medium">Otomatis didahulukan bagi yang paling lama tidak kebagian.</p>
-          <div className="space-y-3">
+        <div className="p-7 md:p-8 rounded-[2rem] bg-white border border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-48 h-48 bg-brand-50 rounded-full -z-10"></div>
+          <h3 className="text-xl font-bold mb-2 text-slate-900">Antrean Jatah Pupuk</h3>
+          <p className="text-sm mb-6 text-slate-500 font-medium">Prioritas otomatis bagi anggota yang paling lama belum mendapatkan subsidi.</p>
+          <div className="space-y-3.5">
             {antreanPupuk.slice(0, 5).map((a, i) => (
-              <div key={a.id} className="flex items-center justify-between text-sm p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="font-semibold text-slate-800"><span className="text-slate-400 font-mono mr-3 text-xs">{String(i + 1).padStart(2, "0")}</span>{a.nama}</span>
-                <span className="text-[11px] font-medium text-slate-500 bg-white px-2.5 py-1 rounded-md border border-slate-200">{a.terakhir ? formatTanggal(a.terakhir) : "Belum Pernah"}</span>
+              <div key={a.id} className="flex items-center justify-between text-sm p-4 rounded-2xl bg-surface border border-slate-200">
+                <span className="font-bold text-slate-800"><span className="text-slate-400 font-mono mr-4 text-xs bg-white px-2 py-1 rounded-md">{String(i + 1).padStart(2, "0")}</span>{a.nama}</span>
+                <span className="text-xs font-bold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">{a.terakhir ? formatTanggal(a.terakhir) : "Belum Pernah"}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm relative overflow-hidden flex flex-col">
-          <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-amber-50 rounded-full -z-10"></div>
-          <h3 className="text-lg font-bold mb-6 text-slate-900">Arisan Terakhir</h3>
+        <div className="p-7 md:p-8 rounded-[2rem] bg-white border border-slate-200 shadow-sm relative overflow-hidden flex flex-col">
+          <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-accent-50 rounded-full -z-10"></div>
+          <h3 className="text-xl font-bold mb-6 text-slate-900">Pemenang Arisan Terakhir</h3>
           {pemenangTerbaru ? (
-            <div className="flex items-center gap-5 bg-gradient-to-br from-amber-50 to-orange-50/30 p-5 rounded-2xl border border-amber-200 shadow-sm">
-              <div className="w-14 h-14 flex items-center justify-center bg-white rounded-full text-2xl shadow-sm shrink-0 border border-amber-100">🏆</div>
+            <div className="flex items-center gap-6 bg-gradient-to-br from-accent-50 to-orange-50/50 p-6 rounded-3xl border border-accent-200 shadow-sm">
+              <div className="w-16 h-16 flex items-center justify-center bg-white rounded-2xl text-3xl shadow-md shrink-0 border border-accent-100 rotate-3">🏆</div>
               <div>
-                <div className="font-bold text-slate-900 text-xl">{pemenangTerbaru.NamaAnggota}</div>
-                <div className="text-xs text-amber-800 font-bold mt-1 bg-amber-200/50 inline-block px-2 py-0.5 rounded-md">Bulan {bulanLabel(pemenangTerbaru.Bulan)}</div>
+                <div className="font-black text-slate-900 text-2xl tracking-tight">{pemenangTerbaru.NamaAnggota}</div>
+                <div className="text-xs text-accent-800 font-bold mt-2 bg-accent-200/50 inline-block px-3 py-1 rounded-lg">Periode {bulanLabel(pemenangTerbaru.Bulan)}</div>
               </div>
             </div>
-          ) : <p className="text-sm text-slate-500 bg-slate-50 p-5 rounded-2xl text-center border border-slate-100">Belum ada data pemenang.</p>}
-          <p className="text-[11px] mt-auto pt-6 text-slate-400 font-medium leading-relaxed">Pencatatan pemenang hasil kocok arisan dilakukan secara digital oleh admin pengurus.</p>
+          ) : <p className="text-sm text-slate-500 bg-surface p-6 rounded-3xl text-center border border-slate-200 font-medium">Belum ada data pemenang tercatat.</p>}
+          <p className="text-xs mt-auto pt-8 text-slate-400 font-medium leading-relaxed">Pengundian dilakukan tatap muka. Bukti kemenangan dicatat secara digital di sistem ini demi transparansi finansial kelompok.</p>
         </div>
       </div>
     </div>
   );
 }
 
-// ================= ANGGOTA (DENGAN CRUD) =================
+// ================= ANGGOTA =================
 function AnggotaTab({ anggota, isAdmin, apiCall, onRefresh, showToast }) {
   const [q, setQ] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -373,56 +408,45 @@ function AnggotaTab({ anggota, isAdmin, apiCall, onRefresh, showToast }) {
 
   const handleSave = async () => {
     if (!form.Nama) return showToast("Nama wajib diisi", "bad");
-    const payload = {
-      id: form.ID, nama: form.Nama, nik: form.NIK, noHp: form.NoHP, 
-      luasLahan: form.LuasLahan_Ha, komoditas: form.Komoditas, status: form.Status
-    };
-    
-    const action = form.ID ? "updateAnggota" : "addAnggota";
-    const res = await apiCall(action, payload, "POST");
-    
-    if (res?.success) {
-      showToast(form.ID ? "Data diperbarui" : "Anggota ditambahkan");
-      setModalOpen(false);
-      onRefresh();
-    } else {
-      showToast(res?.message || "Gagal menyimpan", "bad");
-    }
+    const payload = { id: form.ID, nama: form.Nama, nik: form.NIK, noHp: form.NoHP, luasLahan: form.LuasLahan_Ha, komoditas: form.Komoditas, status: form.Status };
+    const res = await apiCall(form.ID ? "updateAnggota" : "addAnggota", payload, "POST");
+    if (res?.success) { showToast("Database Anggota Diperbarui"); setModalOpen(false); onRefresh(); } 
+    else showToast(res?.message || "Gagal memproses data", "bad");
   };
 
   return (
-    <div className="animate-[fadeIn_0.3s_ease-out]">
+    <div className="animate-slideDown">
       <SectionHeader 
-        eyebrow="Database" title="Data Anggota" desc="Manajemen daftar anggota kelompok tani."
+        eyebrow="Database" title="Direktori Anggota" desc="Manajemen data profil dan kepemilikan lahan anggota."
         action={isAdmin && (
-          <button onClick={() => openForm()} className="px-5 py-2.5 rounded-xl text-sm font-bold bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-200 transition-all flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
-            Tambah Anggota
+          <button onClick={() => openForm()} className="px-6 py-3.5 rounded-2xl text-sm font-bold bg-brand-900 text-white hover:bg-brand-950 shadow-lg shadow-brand-900/30 transition-all flex items-center gap-3">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
+            Registrasi Baru
           </button>
         )}
       />
       
       <div className="mb-6 relative max-w-md">
-        <svg className="w-4 h-4 absolute left-4 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <svg className="w-5 h-5 absolute left-4 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         <input placeholder="Cari nama anggota..." value={q} onChange={(e) => setQ(e.target.value)}
-          className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm bg-white" />
+          className="w-full pl-12 pr-5 py-3.5 rounded-2xl border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm bg-white" />
       </div>
 
-      <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+      <div className="rounded-[2rem] bg-white border border-slate-200 shadow-sm overflow-hidden pb-2">
         <div className="overflow-x-auto hide-scroll">
           <table className="ledger-table">
-            <thead className="ledger-head"><tr><th>ID</th><th>Nama Lengkap</th><th>No. HP</th><th>Lahan</th><th>Komoditas</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
+            <thead className="ledger-head"><tr><th>ID</th><th>Identitas Lengkap</th><th>Kontak (WA)</th><th>Luas Lahan</th><th>Komoditas</th><th>Status</th>{isAdmin && <th>Action</th>}</tr></thead>
             <tbody>
               {filtered.map((a) => (
                 <tr key={a.ID} className="ledger-row">
-                  <td className="font-mono text-slate-400 text-xs">{a.ID}</td>
-                  <td className="font-bold text-slate-800">{a.Nama}</td>
-                  <td className="text-slate-500 font-mono text-xs">{a.NoHP || '-'}</td>
-                  <td className="text-slate-600">{a.LuasLahan_Ha || 0} Ha</td>
-                  <td className="text-slate-600">{a.Komoditas || '-'}</td>
+                  <td className="font-mono text-slate-400 font-medium text-xs">{a.ID}</td>
+                  <td className="font-bold text-slate-900 text-base">{a.Nama}</td>
+                  <td className="text-slate-500 font-mono text-xs font-semibold bg-surface px-2 py-1 rounded inline-block mt-3 border border-slate-200">{a.NoHP || 'Tidak Ada'}</td>
+                  <td className="text-slate-700 font-bold">{a.LuasLahan_Ha || 0} <span className="text-xs font-medium text-slate-400">Ha</span></td>
+                  <td className="text-slate-600 font-medium">{a.Komoditas || '-'}</td>
                   <td><Badge tone={a.Status === "Aktif" ? "good" : "neutral"}>{a.Status}</Badge></td>
                   {isAdmin && (
-                    <td><button onClick={() => openForm(a)} className="text-[11px] font-bold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors">Edit</button></td>
+                    <td><button onClick={() => openForm(a)} className="text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 px-4 py-2 rounded-xl hover:bg-brand-100 transition-colors shadow-sm">Ubah</button></td>
                   )}
                 </tr>
               ))}
@@ -431,36 +455,35 @@ function AnggotaTab({ anggota, isAdmin, apiCall, onRefresh, showToast }) {
         </div>
       </div>
 
-      {/* MODAL CRUD ANGGOTA */}
       {modalOpen && form && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-slate-100">
-              <h3 className="text-xl font-serif font-bold text-slate-900">{form.ID ? "Edit Anggota" : "Tambah Anggota Baru"}</h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-brand-950/70 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-[2.5rem] bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-slideDown">
+            <div className="p-8 pb-6 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-2xl font-serif font-black text-slate-900">{form.ID ? "Perbarui Profil Anggota" : "Registrasi Anggota Baru"}</h3>
             </div>
             
-            <div className="p-6 overflow-y-auto hide-scroll space-y-4">
-              <div><label className="block text-xs font-bold mb-1.5 text-slate-700">Nama Lengkap *</label><input value={form.Nama} onChange={e=>setForm({...form, Nama: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none" /></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="block text-xs font-bold mb-1.5 text-slate-700">NIK (KTP)</label><input value={form.NIK} onChange={e=>setForm({...form, NIK: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono focus:ring-2 focus:ring-brand-500 outline-none" /></div>
-                <div><label className="block text-xs font-bold mb-1.5 text-slate-700">No. HP / WA</label><input value={form.NoHP} onChange={e=>setForm({...form, NoHP: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono focus:ring-2 focus:ring-brand-500 outline-none" /></div>
+            <div className="p-8 overflow-y-auto hide-scroll space-y-5">
+              <div><label className="block text-xs font-bold mb-2 text-slate-700 tracking-wide uppercase">Nama Lengkap Sesuai KTP *</label><input value={form.Nama} onChange={e=>setForm({...form, Nama: e.target.value})} className="w-full px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none" /></div>
+              <div className="grid grid-cols-2 gap-5">
+                <div><label className="block text-xs font-bold mb-2 text-slate-700 tracking-wide uppercase">Nomor NIK</label><input value={form.NIK} onChange={e=>setForm({...form, NIK: e.target.value})} className="w-full px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-mono font-semibold focus:ring-2 focus:ring-brand-500 outline-none" /></div>
+                <div><label className="block text-xs font-bold mb-2 text-slate-700 tracking-wide uppercase">WhatsApp / HP</label><input value={form.NoHP} onChange={e=>setForm({...form, NoHP: e.target.value})} className="w-full px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-mono font-semibold focus:ring-2 focus:ring-brand-500 outline-none" /></div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="block text-xs font-bold mb-1.5 text-slate-700">Luas Lahan (Ha)</label><input type="number" step="0.1" value={form.LuasLahan_Ha} onChange={e=>setForm({...form, LuasLahan_Ha: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none" /></div>
-                <div><label className="block text-xs font-bold mb-1.5 text-slate-700">Komoditas Utama</label><input value={form.Komoditas} onChange={e=>setForm({...form, Komoditas: e.target.value})} placeholder="Padi, Jagung, dll" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none" /></div>
+              <div className="grid grid-cols-2 gap-5">
+                <div><label className="block text-xs font-bold mb-2 text-slate-700 tracking-wide uppercase">Luas Lahan (Ha)</label><input type="number" step="0.1" value={form.LuasLahan_Ha} onChange={e=>setForm({...form, LuasLahan_Ha: e.target.value})} className="w-full px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-brand-500 outline-none" /></div>
+                <div><label className="block text-xs font-bold mb-2 text-slate-700 tracking-wide uppercase">Komoditas Lahan</label><input value={form.Komoditas} onChange={e=>setForm({...form, Komoditas: e.target.value})} placeholder="Padi, Jagung..." className="w-full px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none" /></div>
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1.5 text-slate-700">Status Keanggotaan</label>
-                <select value={form.Status} onChange={e=>setForm({...form, Status: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none">
-                  <option value="Aktif">Aktif</option>
-                  <option value="Non-Aktif">Non-Aktif (Berhenti)</option>
+                <label className="block text-xs font-bold mb-2 text-slate-700 tracking-wide uppercase">Status Keanggotaan</label>
+                <select value={form.Status} onChange={e=>setForm({...form, Status: e.target.value})} className="w-full px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-brand-500 outline-none appearance-none">
+                  <option value="Aktif">Aktif Mengikuti Program</option>
+                  <option value="Non-Aktif">Non-Aktif / Mengundurkan Diri</option>
                 </select>
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-100 flex gap-3 bg-slate-50 rounded-b-3xl">
-              <button onClick={() => setModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl text-sm font-bold border border-slate-200 text-slate-600 hover:bg-white transition-colors">Batal</button>
-              <button onClick={handleSave} className="flex-1 px-4 py-3 rounded-xl text-sm font-bold bg-brand-600 text-white hover:bg-brand-700 transition-colors shadow-lg shadow-brand-200">Simpan Data</button>
+            <div className="p-6 border-t border-slate-100 flex gap-4 bg-slate-50">
+              <button onClick={() => setModalOpen(false)} className="flex-1 px-5 py-4 rounded-2xl text-sm font-bold border-2 border-slate-200 text-slate-600 hover:bg-white transition-colors">Batalkan</button>
+              <button onClick={handleSave} className="flex-1 px-5 py-4 rounded-2xl text-sm font-bold bg-brand-900 text-white hover:bg-brand-950 transition-colors shadow-xl shadow-brand-900/30">Simpan ke Database</button>
             </div>
           </div>
         </div>
@@ -480,73 +503,73 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi }) {
   }
 
   return (
-    <div className="animate-[fadeIn_0.3s_ease-out]">
-      <SectionHeader eyebrow="Distribusi" title="Jatah Pupuk Phonska" desc="Sistem antrean cerdas untuk memastikan distribusi pupuk merata saat stok terbatas." />
+    <div className="animate-slideDown">
+      <SectionHeader eyebrow="Operasional" title="Distribusi Pupuk" desc="Modul alokasi pupuk bersubsidi dengan sistem rotasi berkeadilan." />
 
       {isAdmin && (
-        <div className="mb-8">
+        <div className="mb-10">
           {!showForm ? (
-            <button onClick={() => setShowForm(true)} className="px-5 py-2.5 rounded-xl text-sm font-bold bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-200 transition-all flex items-center gap-2">
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg> Catat Distribusi Baru
+            <button onClick={() => setShowForm(true)} className="px-7 py-4 rounded-2xl text-sm font-bold bg-brand-900 text-white hover:bg-brand-950 shadow-xl shadow-brand-900/30 transition-all flex items-center gap-3">
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg> Catat Eksekusi Distribusi Baru
             </button>
           ) : (
-            <div className="p-6 md:p-8 rounded-3xl bg-white border border-slate-200 shadow-lg">
-              <h3 className="font-serif font-bold text-xl mb-6 text-slate-900 border-b border-slate-100 pb-4">Form Distribusi Pupuk</h3>
-              <div className="grid md:grid-cols-3 gap-5 mb-5">
-                <div><label className="block text-xs font-bold mb-2 text-slate-700">Tanggal</label><input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none" /></div>
-                <div><label className="block text-xs font-bold mb-2 text-slate-700">Kg / Orang</label><input type="number" value={form.jumlahPerOrang} onChange={(e) => setForm({ ...form, jumlahPerOrang: Number(e.target.value) })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none" /></div>
-                <div><label className="block text-xs font-bold mb-2 text-slate-700">Kuota (Orang)</label><input type="number" min={1} max={antreanPupuk.length} value={form.kuota} onChange={(e) => syncKuota(Number(e.target.value))} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none" /></div>
+            <div className="p-7 md:p-10 rounded-[2.5rem] bg-white border border-slate-200 shadow-xl">
+              <h3 className="font-serif font-black text-2xl mb-8 text-slate-900 border-b border-slate-100 pb-5">Form Alokasi Distribusi</h3>
+              <div className="grid md:grid-cols-3 gap-6 mb-6">
+                <div><label className="block text-xs font-bold mb-2.5 text-slate-700 tracking-wide uppercase">Tanggal Eksekusi</label><input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })} className="w-full px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-brand-500 outline-none" /></div>
+                <div><label className="block text-xs font-bold mb-2.5 text-slate-700 tracking-wide uppercase">Berat (Kg) / Orang</label><input type="number" value={form.jumlahPerOrang} onChange={(e) => setForm({ ...form, jumlahPerOrang: Number(e.target.value) })} className="w-full px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-brand-500 outline-none" /></div>
+                <div><label className="block text-xs font-bold mb-2.5 text-slate-700 tracking-wide uppercase">Kuota Anggota</label><input type="number" min={1} max={antreanPupuk.length} value={form.kuota} onChange={(e) => syncKuota(Number(e.target.value))} className="w-full px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-brand-500 outline-none" /></div>
               </div>
-              <label className="block text-xs font-bold mb-2 text-slate-700">Keterangan (Opsional)</label>
-              <input value={form.keterangan} onChange={(e) => setForm({ ...form, keterangan: e.target.value })} placeholder="mis. Distribusi Kuota Agustus" className="w-full mb-6 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none" />
+              <label className="block text-xs font-bold mb-2.5 text-slate-700 tracking-wide uppercase">Keterangan / Catatan (Opsional)</label>
+              <input value={form.keterangan} onChange={(e) => setForm({ ...form, keterangan: e.target.value })} placeholder="mis. Distribusi Kuota Agustus Tahap 1" className="w-full mb-8 px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none" />
 
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 mb-8">
-                 <p className="text-xs font-bold text-slate-600 mb-4 tracking-wide uppercase">Daftar Penerima Otomatis ({form.kuota} Orang)</p>
-                 <div className="max-h-48 overflow-y-auto hide-scroll space-y-2 pr-2">
+              <div className="p-6 bg-surface rounded-3xl border border-slate-200 mb-8">
+                 <p className="text-xs font-bold text-brand-700 mb-5 tracking-widest uppercase flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-brand-500"></div> Daftar Auto-Seleksi Penerima ({form.kuota} Orang)</p>
+                 <div className="max-h-56 overflow-y-auto hide-scroll space-y-2.5 pr-2">
                    {antreanPupuk.map((a) => (
-                     <label key={a.id} className="flex items-center gap-4 p-3 rounded-xl bg-white border border-slate-200 hover:border-brand-300 cursor-pointer transition-colors shadow-sm">
-                       <input type="checkbox" checked={pilihan.has(a.id)} className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500" onChange={(e) => {
+                     <label key={a.id} className="flex items-center gap-4 p-4 rounded-xl bg-white border border-slate-200 hover:border-brand-400 cursor-pointer transition-all shadow-sm group">
+                       <input type="checkbox" checked={pilihan.has(a.id)} className="w-5 h-5 rounded text-brand-600 focus:ring-brand-500" onChange={(e) => {
                          const next = new Set(pilihan); e.target.checked ? next.add(a.id) : next.delete(a.id); setPilihan(next);
                        }} />
-                       <span className="text-sm font-bold text-slate-800">{a.nama}</span>
-                       <span className="text-[10px] bg-slate-100 font-medium px-2.5 py-1 rounded-md text-slate-500 ml-auto border border-slate-200">{a.terakhir ? formatTanggal(a.terakhir) : "Belum Pernah"}</span>
+                       <span className="text-sm font-bold text-slate-900 group-hover:text-brand-700 transition-colors">{a.nama}</span>
+                       <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg ml-auto border border-slate-200">{a.terakhir ? formatTanggal(a.terakhir) : "Belum Pernah"}</span>
                      </label>
                    ))}
                  </div>
               </div>
               <div className="flex gap-4">
-                <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl text-sm font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
-                <button onClick={() => { onDistribusi({ ...form, anggotaIdTerpilih: JSON.stringify([...pilihan]) }); setShowForm(false); }} className="px-6 py-3 rounded-xl text-sm font-bold bg-brand-600 text-white hover:bg-brand-700 transition-colors shadow-lg shadow-brand-200">Simpan Distribusi</button>
+                <button onClick={() => setShowForm(false)} className="px-8 py-4 rounded-2xl text-sm font-bold border-2 border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Batalkan</button>
+                <button onClick={() => { onDistribusi({ ...form, anggotaIdTerpilih: JSON.stringify([...pilihan]) }); setShowForm(false); }} className="px-8 py-4 rounded-2xl text-sm font-bold bg-brand-900 text-white hover:bg-brand-950 transition-colors shadow-xl shadow-brand-900/30">Eksekusi Distribusi</button>
               </div>
             </div>
           )}
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
-        <div>
-          <h3 className="text-xs font-bold mb-3 uppercase tracking-widest text-slate-500 font-mono">Urutan Antrean Saat Ini</h3>
-          <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+      <div className="grid lg:grid-cols-2 gap-8 md:gap-10">
+        <div className="flex flex-col">
+          <h3 className="text-[11px] font-bold mb-4 uppercase tracking-widest text-slate-500 font-mono">Real-Time Antrean</h3>
+          <div className="rounded-[2rem] bg-white border border-slate-200 shadow-sm overflow-hidden flex-1">
             {antreanPupuk.map((a, i) => (
-              <div key={a.id} className="flex items-center justify-between p-4 text-sm border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                <span className="font-bold text-slate-800"><span className="font-mono font-medium text-slate-400 mr-3 text-xs">{String(i + 1).padStart(2, "0")}</span>{a.nama}</span>
-                <span className="text-xs font-medium text-slate-500">{a.terakhir ? formatTanggal(a.terakhir) : "Belum pernah"}</span>
+              <div key={a.id} className="flex items-center justify-between p-5 text-sm border-b border-slate-100 last:border-0 hover:bg-surface transition-colors">
+                <span className="font-bold text-slate-900"><span className="font-mono font-bold text-slate-400 mr-4 text-xs bg-surface px-2 py-1 rounded">{String(i + 1).padStart(2, "0")}</span>{a.nama}</span>
+                <span className="text-xs font-bold text-slate-500">{a.terakhir ? formatTanggal(a.terakhir) : "Belum pernah"}</span>
               </div>
             ))}
           </div>
         </div>
-        <div>
-          <h3 className="text-xs font-bold mb-3 uppercase tracking-widest text-slate-500 font-mono">Riwayat Tersalurkan</h3>
-          <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden h-[450px] flex flex-col">
+        <div className="flex flex-col">
+          <h3 className="text-[11px] font-bold mb-4 uppercase tracking-widest text-slate-500 font-mono">Log Transaksi Keluar</h3>
+          <div className="rounded-[2rem] bg-white border border-slate-200 shadow-sm overflow-hidden h-[500px] flex flex-col">
             <div className="overflow-auto hide-scroll flex-1">
               <table className="ledger-table min-w-full">
-                <thead className="ledger-head sticky top-0 bg-white shadow-sm z-10"><tr><th>Tanggal</th><th>Nama</th><th>Kg</th><th>Status</th></tr></thead>
+                <thead className="ledger-head sticky top-0 bg-white shadow-sm z-10"><tr><th>Tanggal</th><th>Nama</th><th>Total</th><th>Status</th></tr></thead>
                 <tbody>
                   {[...riwayat].reverse().map((r, idx) => (
                     <tr key={r.ID || idx} className="ledger-row">
-                      <td className="text-xs font-medium text-slate-500 whitespace-nowrap">{formatTanggal(r.Tanggal)}</td>
-                      <td className="font-bold text-slate-800">{r.NamaAnggota}</td>
-                      <td className="text-slate-600 font-mono text-sm">{r.Jumlah_Kg || "-"}</td>
+                      <td className="text-xs font-bold text-slate-500 whitespace-nowrap">{formatTanggal(r.Tanggal)}</td>
+                      <td className="font-bold text-slate-900">{r.NamaAnggota}</td>
+                      <td className="text-slate-600 font-mono text-sm font-bold">{r.Jumlah_Kg || "-"} <span className="text-[10px] font-sans text-slate-400">Kg</span></td>
                       <td><Badge tone={r.Status === "Dapat" ? "good" : "warn"}>{r.Status}</Badge></td>
                     </tr>
                   ))}
@@ -560,7 +583,7 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi }) {
   );
 }
 
-// ================= KEUANGAN (DENGAN NOMINAL DINAMIS) =================
+// ================= KEUANGAN =================
 function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat }) {
   const [form, setForm] = useState({
     bulan: new Date().toISOString().slice(0, 7),
@@ -574,7 +597,7 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat }) {
 
   const handleSubmit = () => {
     if (!form.bayarIuran && !form.bayarArisan && !form.pemenangArisan) {
-      alert("Centang minimal satu aktivitas untuk disimpan!"); return;
+      alert("Pilih minimal satu instrumen keuangan untuk di-posting."); return;
     }
     onCatat(form);
     setForm({...form, bayarIuran: false, bayarArisan: false, pemenangArisan: false});
@@ -591,64 +614,64 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat }) {
   }, [iuran]);
 
   return (
-    <div className="animate-[fadeIn_0.3s_ease-out]">
-      <SectionHeader eyebrow="Buku Kas" title="Arisan & Iuran Wajib" desc="Pantau status pembayaran arisan dan iuran wajib bulanan dalam satu tampilan terpusat." />
+    <div className="animate-slideDown">
+      <SectionHeader eyebrow="Buku Kas Besar" title="Arisan & Iuran" desc="Modul terintegrasi untuk pencatatan masuknya dana iuran wajib dan arisan." />
 
       {isAdmin && (
-        <div className="mb-8 p-6 md:p-8 rounded-3xl bg-white border border-slate-200 shadow-lg relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-40 h-40 bg-slate-50 rounded-bl-[120px] -z-10"></div>
-          <h3 className="font-serif font-bold text-xl mb-6 text-slate-900 border-b border-slate-100 pb-4">Catat Pembayaran Bulanan</h3>
+        <div className="mb-10 p-7 md:p-10 rounded-[2.5rem] bg-white border border-slate-200 shadow-xl relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-64 h-64 bg-surface rounded-bl-[150px] -z-10"></div>
+          <h3 className="font-serif font-black text-2xl mb-8 text-slate-900 border-b border-slate-100 pb-5">Posting Pembayaran Kas</h3>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div><label className="block text-xs font-bold mb-2 text-slate-700">Pilih Bulan</label><input type="month" value={form.bulan} onChange={(e) => setForm({ ...form, bulan: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none font-medium" /></div>
-            <div><label className="block text-xs font-bold mb-2 text-slate-700">Pilih Anggota</label><select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 outline-none font-bold text-slate-800">{anggota.map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}</select></div>
-            <div><label className="block text-xs font-bold mb-2 text-slate-700">Set Nominal Iuran</label><input type="number" value={form.nominalIuran} onChange={(e) => setForm({ ...form, nominalIuran: Number(e.target.value) })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono focus:ring-2 focus:ring-brand-500 outline-none" /></div>
-            <div><label className="block text-xs font-bold mb-2 text-slate-700">Set Nominal Arisan</label><input type="number" value={form.nominalArisan} onChange={(e) => setForm({ ...form, nominalArisan: Number(e.target.value) })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono focus:ring-2 focus:ring-brand-500 outline-none" /></div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+            <div><label className="block text-[11px] font-bold mb-2.5 text-slate-500 tracking-widest uppercase font-mono">Periode Bulan</label><input type="month" value={form.bulan} onChange={(e) => setForm({ ...form, bulan: e.target.value })} className="w-full px-5 py-3.5 rounded-xl bg-white border-2 border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none font-bold text-slate-700 shadow-sm" /></div>
+            <div><label className="block text-[11px] font-bold mb-2.5 text-slate-500 tracking-widest uppercase font-mono">Nama Anggota</label><select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-5 py-3.5 rounded-xl bg-white border-2 border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none font-black text-brand-900 shadow-sm">{anggota.map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}</select></div>
+            <div><label className="block text-[11px] font-bold mb-2.5 text-slate-500 tracking-widest uppercase font-mono">Tarif Iuran</label><input type="number" value={form.nominalIuran} onChange={(e) => setForm({ ...form, nominalIuran: Number(e.target.value) })} className="w-full px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-mono font-bold focus:ring-2 focus:ring-brand-500 outline-none" /></div>
+            <div><label className="block text-[11px] font-bold mb-2.5 text-slate-500 tracking-widest uppercase font-mono">Tarif Arisan</label><input type="number" value={form.nominalArisan} onChange={(e) => setForm({ ...form, nominalArisan: Number(e.target.value) })} className="w-full px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-mono font-bold focus:ring-2 focus:ring-brand-500 outline-none" /></div>
           </div>
 
-          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-8">
-            <label className="block text-xs font-bold tracking-widest uppercase mb-4 text-slate-500 font-mono">Tandai Aktivitas (Ceklis)</label>
-            <div className="grid md:grid-cols-3 gap-4">
-              <label className={`flex items-center gap-4 cursor-pointer p-4 rounded-xl border-2 transition-all shadow-sm ${form.bayarIuran ? "bg-brand-50 border-brand-500" : "bg-white border-slate-200 hover:border-brand-300"}`}>
-                <input type="checkbox" checked={form.bayarIuran} onChange={(e) => setForm({ ...form, bayarIuran: e.target.checked })} className="w-5 h-5 rounded text-brand-600 focus:ring-brand-500" />
-                <span className="text-sm font-bold text-slate-800">Bayar Iuran<br/><span className="text-xs font-mono font-medium text-brand-700">{formatRupiah(form.nominalIuran)}</span></span>
+          <div className="bg-surface p-6 rounded-3xl border border-slate-200 mb-8">
+            <label className="block text-xs font-bold tracking-widest uppercase mb-5 text-slate-500 font-mono">Tandai Instrumen Pembayaran</label>
+            <div className="grid md:grid-cols-3 gap-5">
+              <label className={`flex items-center gap-5 cursor-pointer p-5 rounded-2xl border-[3px] transition-all shadow-sm ${form.bayarIuran ? "bg-brand-50 border-brand-500" : "bg-white border-slate-200 hover:border-brand-300"}`}>
+                <input type="checkbox" checked={form.bayarIuran} onChange={(e) => setForm({ ...form, bayarIuran: e.target.checked })} className="w-6 h-6 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                <span className="text-base font-black text-slate-900 leading-tight">Bayar Iuran<br/><span className="text-xs font-mono font-bold text-brand-700">{formatRupiah(form.nominalIuran)}</span></span>
               </label>
-              <label className={`flex items-center gap-4 cursor-pointer p-4 rounded-xl border-2 transition-all shadow-sm ${form.bayarArisan ? "bg-brand-50 border-brand-500" : "bg-white border-slate-200 hover:border-brand-300"}`}>
-                <input type="checkbox" checked={form.bayarArisan} onChange={(e) => setForm({ ...form, bayarArisan: e.target.checked })} className="w-5 h-5 rounded text-brand-600 focus:ring-brand-500" />
-                <span className="text-sm font-bold text-slate-800">Bayar Arisan<br/><span className="text-xs font-mono font-medium text-brand-700">{formatRupiah(form.nominalArisan)}</span></span>
+              <label className={`flex items-center gap-5 cursor-pointer p-5 rounded-2xl border-[3px] transition-all shadow-sm ${form.bayarArisan ? "bg-brand-50 border-brand-500" : "bg-white border-slate-200 hover:border-brand-300"}`}>
+                <input type="checkbox" checked={form.bayarArisan} onChange={(e) => setForm({ ...form, bayarArisan: e.target.checked })} className="w-6 h-6 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                <span className="text-base font-black text-slate-900 leading-tight">Bayar Arisan<br/><span className="text-xs font-mono font-bold text-brand-700">{formatRupiah(form.nominalArisan)}</span></span>
               </label>
-              <label className={`flex items-center gap-4 cursor-pointer p-4 rounded-xl border-2 transition-all shadow-sm ${form.pemenangArisan ? "bg-amber-50 border-amber-500" : "bg-white border-slate-200 hover:border-amber-300"}`}>
-                <input type="checkbox" checked={form.pemenangArisan} onChange={(e) => setForm({ ...form, pemenangArisan: e.target.checked })} className="w-5 h-5 rounded text-amber-500 focus:ring-amber-500" />
-                <span className="text-sm font-bold text-slate-800">Pemenang Arisan<br/><span className="text-xs font-medium text-amber-700">Tandai Pemenang</span></span>
+              <label className={`flex items-center gap-5 cursor-pointer p-5 rounded-2xl border-[3px] transition-all shadow-sm ${form.pemenangArisan ? "bg-accent-50 border-accent-500" : "bg-white border-slate-200 hover:border-accent-300"}`}>
+                <input type="checkbox" checked={form.pemenangArisan} onChange={(e) => setForm({ ...form, pemenangArisan: e.target.checked })} className="w-6 h-6 rounded border-slate-300 text-accent-500 focus:ring-accent-500" />
+                <span className="text-base font-black text-slate-900 leading-tight">Menang Arisan<br/><span className="text-xs font-bold text-accent-700">Tandai Pemenang</span></span>
               </label>
             </div>
           </div>
           
-          <button onClick={handleSubmit} className="px-8 py-3.5 rounded-xl text-sm font-bold bg-brand-600 text-white hover:bg-brand-700 transition-colors shadow-lg shadow-brand-200">Simpan Data Kas</button>
+          <button onClick={handleSubmit} className="px-10 py-4 rounded-2xl text-sm font-bold bg-brand-900 text-white hover:bg-brand-950 transition-colors shadow-xl shadow-brand-900/30">Posting ke Database Kas</button>
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
+      <div className="grid lg:grid-cols-2 gap-8 md:gap-10">
         <div>
-          <h3 className="text-lg font-serif font-bold mb-4 text-slate-900 flex items-center gap-3">
-             <span className="w-2.5 h-6 bg-brand-500 rounded-full inline-block"></span> Iuran Wajib
+          <h3 className="text-xl font-serif font-black mb-5 text-brand-950 flex items-center gap-3">
+             <span className="w-3 h-8 bg-brand-500 rounded-full inline-block shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span> Ledger Iuran
           </h3>
           <div className="space-y-6">
             {iuranByBulan.map(([bulan, rows]) => {
               const lunas = rows.filter((r) => r.StatusBayar === "Lunas").length;
               return (
-                <div key={`iuran-${bulan}`} className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 flex items-center justify-between bg-slate-50 border-b border-slate-100">
-                    <span className="font-bold text-sm text-slate-900">{bulanLabel(bulan)}</span>
-                    <span className="text-xs font-bold px-3 py-1 bg-white border border-slate-200 rounded-lg text-slate-600 shadow-sm">{lunas} Lunas</span>
+                <div key={`iuran-${bulan}`} className="rounded-[2rem] bg-white border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="px-6 py-5 flex items-center justify-between bg-surface border-b border-slate-100">
+                    <span className="font-black text-base text-slate-900">{bulanLabel(bulan)}</span>
+                    <span className="text-xs font-bold px-4 py-1.5 bg-white border border-slate-200 rounded-lg text-brand-700 shadow-sm">{lunas} Anggota Lunas</span>
                   </div>
-                  <div className="overflow-x-auto hide-scroll">
+                  <div className="overflow-x-auto hide-scroll pb-2">
                     <table className="ledger-table">
                       <tbody>
                         {rows.map((r, i) => (
                           <tr key={r.ID || i} className="ledger-row">
-                            <td className="font-bold text-slate-800">{r.NamaAnggota}</td>
-                            <td className="text-slate-500 font-mono text-xs">{formatRupiah(r.Nominal)}</td>
+                            <td className="font-bold text-slate-900">{r.NamaAnggota}</td>
+                            <td className="text-slate-500 font-mono text-xs font-bold">{formatRupiah(r.Nominal)}</td>
                             <td className="text-right"><Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge></td>
                           </tr>
                         ))}
@@ -662,27 +685,27 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat }) {
         </div>
 
         <div>
-          <h3 className="text-lg font-serif font-bold mb-4 text-slate-900 flex items-center gap-3">
-            <span className="w-2.5 h-6 bg-amber-400 rounded-full inline-block"></span> Arisan Bulanan
+          <h3 className="text-xl font-serif font-black mb-5 text-brand-950 flex items-center gap-3">
+            <span className="w-3 h-8 bg-accent-500 rounded-full inline-block shadow-[0_0_10px_rgba(245,158,11,0.5)]"></span> Ledger Arisan
           </h3>
           <div className="space-y-6">
             {arisanByBulan.map(([bulan, rows]) => (
-              <div key={`arisan-${bulan}`} className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 flex items-center justify-between bg-slate-50 border-b border-slate-100">
-                  <span className="font-bold text-sm text-slate-900">{bulanLabel(bulan)}</span>
+              <div key={`arisan-${bulan}`} className="rounded-[2rem] bg-white border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-5 flex items-center justify-between bg-surface border-b border-slate-100 flex-wrap gap-2">
+                  <span className="font-black text-base text-slate-900">{bulanLabel(bulan)}</span>
                   {rows.find((r) => r.Pemenang === "Y") && (
-                    <span className="text-xs font-bold flex items-center gap-2 text-amber-800 bg-amber-100 border border-amber-200 px-3 py-1 rounded-lg shadow-sm">
+                    <span className="text-[11px] font-black flex items-center gap-2 text-accent-900 bg-accent-100 border border-accent-200 px-3 py-1.5 rounded-lg shadow-sm tracking-wide">
                        🏆 {rows.find((r) => r.Pemenang === "Y").NamaAnggota}
                     </span>
                   )}
                 </div>
-                <div className="overflow-x-auto hide-scroll">
+                <div className="overflow-x-auto hide-scroll pb-2">
                   <table className="ledger-table">
                     <tbody>
                       {rows.map((r, i) => (
                         <tr key={r.ID || i} className="ledger-row">
-                          <td className="font-bold text-slate-800">{r.NamaAnggota}</td>
-                          <td className="text-slate-500 font-mono text-xs">{formatRupiah(r.Nominal)}</td>
+                          <td className="font-bold text-slate-900">{r.NamaAnggota}</td>
+                          <td className="text-slate-500 font-mono text-xs font-bold">{formatRupiah(r.Nominal)}</td>
                           <td className="text-right"><Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge></td>
                         </tr>
                       ))}
