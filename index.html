@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kelompok Tani Sumber Makmur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- KONFIGURASI BABEL UNTUK MEMAKSA MODE CLASSIC -->
+<script>
+  Babel.registerPreset('react-classic', {
+    presets: [
+      [Babel.availablePresets['react'], { "runtime": "classic" }]
+    ]
+  });
+</script>
+
+<style>
+  body { margin: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- MENGGUNAKAN PRESET react-classic YANG SUDAH DIBUAT DI ATAS -->
+<script type="text/babel" data-presets="react-classic">
+const { useState, useEffect, useMemo } = React;
+
+/**
+ * ============================================================
+ * ISI URL GOOGLE APPS SCRIPT DI BAWAH INI SEBELUM DEPLOY!
+ * ============================================================
+ */
+const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbxsqFQC9HqvnGCfPIIuWdEzA6QzXApkdk5qWd8r7fM2EAcox7HFfCTc93xxFwgQhXkg/exec";
+
+// ---------- DEMO DATA (dipakai jika API belum disambungkan) ----------
+const demoAnggota = [
+  { ID: "A1", Nama: "Suparjo", NIK: "3301xxxxxxxx01", NoHP: "0812xxxx01", LuasLahan_Ha: 0.8, Komoditas: "Padi", Status: "Aktif", TanggalGabung: "2022-01-10" },
+  { ID: "A2", Nama: "Warsini", NIK: "3301xxxxxxxx02", NoHP: "0812xxxx02", LuasLahan_Ha: 1.2, Komoditas: "Padi", Status: "Aktif", TanggalGabung: "2022-01-10" },
+  { ID: "A3", Nama: "Mulyadi", NIK: "3301xxxxxxxx03", NoHP: "0812xxxx03", LuasLahan_Ha: 0.5, Komoditas: "Jagung", Status: "Aktif", TanggalGabung: "2022-03-02" },
+  { ID: "A4", Nama: "Siti Rohana", NIK: "3301xxxxxxxx04", NoHP: "0812xxxx04", LuasLahan_Ha: 0.9, Komoditas: "Padi", Status: "Aktif", TanggalGabung: "2022-03-02" },
+  { ID: "A5", Nama: "Kusnandar", NIK: "3301xxxxxxxx05", NoHP: "0812xxxx05", LuasLahan_Ha: 1.0, Komoditas: "Padi", Status: "Aktif", TanggalGabung: "2023-01-15" },
+  { ID: "A6", Nama: "Ratmi", NIK: "3301xxxxxxxx06", NoHP: "0812xxxx06", LuasLahan_Ha: 0.7, Komoditas: "Cabai", Status: "Aktif", TanggalGabung: "2023-01-15" },
+];
+
+const demoPupukRiwayat = [
+  { ID: "P1", Tanggal: "2026-05-04", AnggotaID: "A1", NamaAnggota: "Suparjo", Jumlah_Kg: 50, Status: "Dapat", Keterangan: "Distribusi Mei", DicatatOleh: "Admin" },
+  { ID: "P2", Tanggal: "2026-05-04", AnggotaID: "A2", NamaAnggota: "Warsini", Jumlah_Kg: 50, Status: "Dapat", Keterangan: "Distribusi Mei", DicatatOleh: "Admin" },
+  { ID: "P3", Tanggal: "2026-05-04", AnggotaID: "A3", NamaAnggota: "Mulyadi", Jumlah_Kg: 0, Status: "Menunggu", Keterangan: "Stok terbatas", DicatatOleh: "Admin" },
+  { ID: "P4", Tanggal: "2026-05-04", AnggotaID: "A4", NamaAnggota: "Siti Rohana", Jumlah_Kg: 0, Status: "Menunggu", Keterangan: "Stok terbatas", DicatatOleh: "Admin" },
+  { ID: "P5", Tanggal: "2026-06-06", AnggotaID: "A3", NamaAnggota: "Mulyadi", Jumlah_Kg: 50, Status: "Dapat", Keterangan: "Distribusi Juni", DicatatOleh: "Admin" },
+  { ID: "P6", Tanggal: "2026-06-06", AnggotaID: "A4", NamaAnggota: "Siti Rohana", Jumlah_Kg: 50, Status: "Dapat", Keterangan: "Distribusi Juni", DicatatOleh: "Admin" },
+];
+
+const demoArisan = [
+  { ID: "AR1", Bulan: "2026-06", AnggotaID: "A1", NamaAnggota: "Suparjo", StatusBayar: "Lunas", Nominal: 50000, Pemenang: "N" },
+  { ID: "AR2", Bulan: "2026-06", AnggotaID: "A2", NamaAnggota: "Warsini", StatusBayar: "Lunas", Nominal: 50000, Pemenang: "Y" },
+  { ID: "AR3", Bulan: "2026-06", AnggotaID: "A3", NamaAnggota: "Mulyadi", StatusBayar: "Belum", Nominal: 50000, Pemenang: "N" },
+  { ID: "AR4", Bulan: "2026-07", AnggotaID: "A1", NamaAnggota: "Suparjo", StatusBayar: "Lunas", Nominal: 50000, Pemenang: "N" },
+  { ID: "AR5", Bulan: "2026-07", AnggotaID: "A4", NamaAnggota: "Siti Rohana", StatusBayar: "Lunas", Nominal: 50000, Pemenang: "Y" },
+];
+
+const demoIuran = [
+  { ID: "IR1", Bulan: "2026-07", AnggotaID: "A1", NamaAnggota: "Suparjo", StatusBayar: "Lunas", Nominal: 25000 },
+  { ID: "IR2", Bulan: "2026-07", AnggotaID: "A2", NamaAnggota: "Warsini", StatusBayar: "Lunas", Nominal: 25000 },
+  { ID: "IR3", Bulan: "2026-07", AnggotaID: "A3", NamaAnggota: "Mulyadi", StatusBayar: "Belum", Nominal: 25000 },
+  { ID: "IR4", Bulan: "2026-07", AnggotaID: "A4", NamaAnggota: "Siti Rohana", StatusBayar: "Belum", Nominal: 25000 },
+];
+
+const BULAN_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+function formatTanggal(d) {
+  if (!d) return "-";
+  const date = new Date(d);
+  if (isNaN(date)) return String(d);
+  return `${date.getDate()} ${BULAN_ID[date.getMonth()]} ${date.getFullYear()}`;
+}
+function formatRupiah(n) {
+  return "Rp " + Number(n || 0).toLocaleString("id-ID");
+}
+function bulanLabel(b) {
+  if (!b) return "-";
+  const [y, m] = String(b).split("-");
+  return `${BULAN_ID[parseInt(m, 10) - 1]} ${y}`;
+}
+
+// ---------- Stempel (signature element) ----------
+function Stempel({ label = "TERCATAT" }) {
+  return (
+    <span
+      className="inline-flex items-center justify-center rounded-full border-2 shrink-0"
+      style={{
+        width: 54, height: 54,
+        borderColor: "#7A4B2A",
+        color: "#7A4B2A",
+        transform: "rotate(-8deg)",
+        fontFamily: "'IBM Plex Mono', monospace",
+        fontSize: 8,
+        fontWeight: 600,
+        letterSpacing: "0.03em",
+        textAlign: "center",
+        lineHeight: 1.1,
+        opacity: 0.85,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function Badge({ children, tone = "neutral" }) {
+  const tones = {
+    neutral: "bg-[#EFE9DC] text-[#4A4436]",
+    good: "bg-[#E4EBDD] text-[#2F4A2B]",
+    warn: "bg-[#F5E6C8] text-[#7A4B2A]",
+    bad: "bg-[#F2DEDA] text-[#8B3A2B]",
+  };
+  return (
+    <span className={`px-2.5 py-1 rounded-full text-xs font-medium tracking-wide ${tones[tone]}`} style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+      {children}
+    </span>
+  );
+}
+
+function SectionHeader({ eyebrow, title, desc }) {
+  return (
+    <div className="mb-6">
+      <div className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#8FA383", fontFamily: "'IBM Plex Mono', monospace" }}>{eyebrow}</div>
+      <h2 className="text-3xl mb-1" style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, color: "#1F3D2B" }}>{title}</h2>
+      {desc && <p className="text-sm max-w-xl" style={{ color: "#6B6A5E" }}>{desc}</p>}
+    </div>
+  );
+}
+
+function App() {
+  const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
+  const [apiUrlDraft, setApiUrlDraft] = useState(DEFAULT_API_URL);
+  const [tab, setTab] = useState("dashboard");
+  const [token, setToken] = useState(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginForm, setLoginForm] = useState({ username: "", password: "" });
+  const [loginError, setLoginError] = useState("");
+
+  const [anggota, setAnggota] = useState(demoAnggota);
+  const [pupukRiwayat, setPupukRiwayat] = useState(demoPupukRiwayat);
+  const [arisan, setArisan] = useState(demoArisan);
+  const [iuran, setIuran] = useState(demoIuran);
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const isConnected = !!apiUrl;
+  const isAdmin = !!token;
+
+  function showToast(msg, tone = "good") {
+    setToast({ msg, tone });
+    setTimeout(() => setToast(null), 3200);
+  }
+
+  async function apiCall(action, data = {}, method = "GET") {
+    if (!apiUrl) return null;
+    setLoading(true);
+    try {
+      if (method === "GET") {
+        const res = await fetch(`${apiUrl}?action=${action}`);
+        return await res.json();
+      } else {
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          body: JSON.stringify({ action, token, ...data }),
+        });
+        return await res.json();
+      }
+    } catch (err) {
+      showToast("Gagal terhubung ke server: " + err.message, "bad");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!apiUrl) return;
+    (async () => {
+      const a = await apiCall("getAnggota");
+      if (a?.success) setAnggota(a.data);
+      const p = await apiCall("getPupukStatus");
+      if (p?.success) setPupukRiwayat(p.riwayat);
+      const ar = await apiCall("getArisan");
+      if (ar?.success) setArisan(ar.data);
+      const ir = await apiCall("getIuran");
+      if (ir?.success) setIuran(ir.data);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiUrl]);
+
+  async function handleLogin() {
+    setLoginError("");
+    if (!apiUrl) {
+      // demo mode login
+      if (loginForm.username === "admin" && loginForm.password === "admin123") {
+        setToken("demo-token");
+        setLoginOpen(false);
+        showToast("Masuk sebagai admin (mode demo)");
+      } else {
+        setLoginError("Username/password salah. Coba admin / admin123 di mode demo.");
+      }
+      return;
+    }
+    const res = await apiCall("login", { username: loginForm.username, password: loginForm.password }, "POST");
+    if (res?.success) {
+      setToken(res.token);
+      setLoginOpen(false);
+      showToast("Berhasil masuk sebagai admin");
+    } else {
+      setLoginError(res?.message || "Gagal masuk");
+    }
+  }
+
+  // ---------- Perhitungan antrean pupuk (adil & transparan) ----------
+  const antreanPupuk = useMemo(() => {
+    const aktif = anggota.filter((a) => a.Status === "Aktif");
+    const list = aktif.map((a) => {
+      const riwayatSaya = pupukRiwayat.filter((r) => r.AnggotaID === a.ID && r.Status === "Dapat");
+      let terakhir = null;
+      riwayatSaya.forEach((r) => {
+        const t = new Date(r.Tanggal);
+        if (!terakhir || t > terakhir) terakhir = t;
+      });
+      return { id: a.ID, nama: a.Nama, terakhir, totalDapat: riwayatSaya.length };
+    });
+    list.sort((x, y) => {
+      if (!x.terakhir && !y.terakhir) return x.totalDapat - y.totalDapat;
+      if (!x.terakhir) return -1;
+      if (!y.terakhir) return 1;
+      return x.terakhir - y.terakhir;
+    });
+    return list;
+  }, [anggota, pupukRiwayat]);
+
+  const dashboardStats = useMemo(() => {
+    const totalAnggota = anggota.filter((a) => a.Status === "Aktif").length;
+    const totalIuran = iuran.filter((i) => i.StatusBayar === "Lunas").reduce((s, i) => s + Number(i.Nominal || 0), 0);
+    const totalArisan = arisan.filter((a) => a.StatusBayar === "Lunas").reduce((s, a) => s + Number(a.Nominal || 0), 0);
+    const totalPupuk = pupukRiwayat.filter((p) => p.Status === "Dapat").reduce((s, p) => s + Number(p.Jumlah_Kg || 0), 0);
+    const belumBayarIuran = iuran.filter((i) => i.StatusBayar !== "Lunas").length;
+    return { totalAnggota, totalIuran, totalArisan, totalPupuk, belumBayarIuran };
+  }, [anggota, iuran, arisan, pupukRiwayat]);
+
+  return (
+    <div style={{ fontFamily: "'Inter', sans-serif", background: "#FBF8F2", minHeight: "100vh", color: "#22241F" }}>
+      <style>{`
+        ::selection { background: #C9A227; color: #1F3D2B; }
+        table { border-collapse: collapse; width: 100%; }
+        .ledger-row td { border-bottom: 1px solid #E4DFD0; padding: 10px 12px; font-size: 14px; }
+        .ledger-row:hover td { background: #F4EFE2; }
+        .ledger-head th { text-align: left; padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #8FA383; border-bottom: 2px solid #1F3D2B; font-family: 'IBM Plex Mono', monospace; font-weight: 500;}
+        input, select { font-family: 'Inter', sans-serif; }
+        button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #C9A227; outline-offset: 1px; }
+      `}</style>
+
+      {/* TOAST */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium"
+          style={{ background: toast.tone === "bad" ? "#8B3A2B" : "#1F3D2B", color: "#FBF8F2" }}>
+          {toast.msg}
+        </div>
+      )}
+
+      <div className="flex flex-col md:flex-row">
+        {/* SIDEBAR */}
+        <aside className="md:w-64 shrink-0 border-b md:border-b-0 md:border-r" style={{ borderColor: "#E4DFD0", background: "#F4EFE2" }}>
+          <div className="p-6 border-b" style={{ borderColor: "#E4DFD0" }}>
+            <div className="text-xs tracking-[0.2em] uppercase mb-1" style={{ color: "#8FA383", fontFamily: "'IBM Plex Mono', monospace" }}>Buku Besar Digital</div>
+            <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 22, color: "#1F3D2B", lineHeight: 1.15 }}>
+              Kelompok Tani<br />Sumber Makmur
+            </div>
+          </div>
+
+          <nav className="p-3 flex md:flex-col gap-1 overflow-x-auto">
+            {[
+              ["dashboard", "Ringkasan"],
+              ["anggota", "Data Anggota"],
+              ["pupuk", "Jatah Pupuk"],
+              ["arisan", "Arisan"],
+              ["iuran", "Iuran Wajib"],
+              ["pengaturan", "Pengaturan"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className="text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                style={{
+                  background: tab === key ? "#1F3D2B" : "transparent",
+                  color: tab === key ? "#FBF8F2" : "#4A4436",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="p-4 mt-2">
+            {isAdmin ? (
+              <div className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: "#E4EBDD" }}>
+                <span className="text-xs font-medium" style={{ color: "#2F4A2B" }}>● Masuk sebagai Admin</span>
+                <button onClick={() => { setToken(null); showToast("Keluar dari mode admin"); }} className="text-xs underline" style={{ color: "#2F4A2B" }}>Keluar</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setLoginOpen(true)}
+                className="w-full px-3 py-2.5 rounded-lg text-sm font-medium border"
+                style={{ borderColor: "#1F3D2B", color: "#1F3D2B" }}
+              >
+                Masuk sebagai Admin
+              </button>
+            )}
+            <div className="mt-3 text-[11px]" style={{ color: isConnected ? "#2F4A2B" : "#8B3A2B", fontFamily: "'IBM Plex Mono', monospace" }}>
+              {isConnected ? "● Terhubung ke Google Sheets" : "● Mode demo (data contoh)"}
+            </div>
+          </div>
+        </aside>
+
+        {/* MAIN */}
+        <main className="flex-1 p-6 md:p-10 max-w-5xl">
+          {tab === "dashboard" && (
+            <Dashboard stats={dashboardStats} antreanPupuk={antreanPupuk} arisan={arisan} />
+          )}
+          {tab === "anggota" && <AnggotaTab anggota={anggota} />}
+          {tab === "pupuk" && (
+            <PupukTab
+              antreanPupuk={antreanPupuk}
+              riwayat={pupukRiwayat}
+              isAdmin={isAdmin}
+              onDistribusi={async (payload) => {
+                if (apiUrl) {
+                  const res = await apiCall("distribusiPupuk", payload, "POST");
+                  if (res?.success) {
+                    showToast(res.message);
+                    const p = await apiCall("getPupukStatus");
+                    if (p?.success) setPupukRiwayat(p.riwayat);
+                  } else showToast(res?.message || "Gagal mencatat distribusi", "bad");
+                } else {
+                  // demo mode: simulate locally
+                  const anggotaAktif = anggota.filter((a) => a.Status === "Aktif");
+                  const baseId = pupukRiwayat.length + 1;
+                  const baru = anggotaAktif.map((a, i) => ({
+                    ID: "P" + (baseId + i),
+                    Tanggal: payload.tanggal,
+                    AnggotaID: a.ID,
+                    NamaAnggota: a.Nama,
+                    Jumlah_Kg: payload.anggotaIdTerpilih.includes(a.ID) ? payload.jumlahPerOrang : 0,
+                    Status: payload.anggotaIdTerpilih.includes(a.ID) ? "Dapat" : "Menunggu",
+                    Keterangan: payload.keterangan,
+                    DicatatOleh: "Admin",
+                  }));
+                  setPupukRiwayat([...pupukRiwayat, ...baru]);
+                  showToast(`Distribusi tercatat untuk ${payload.anggotaIdTerpilih.length} anggota`);
+                }
+              }}
+            />
+          )}
+          {tab === "arisan" && (
+            <ArisanTab
+              arisan={arisan}
+              anggota={anggota}
+              isAdmin={isAdmin}
+              onCatat={async (payload) => {
+                if (apiUrl) {
+                  const res = await apiCall("catatArisan", payload, "POST");
+                  if (res?.success) {
+                    showToast("Data arisan tersimpan");
+                    const ar = await apiCall("getArisan");
+                    if (ar?.success) setArisan(ar.data);
+                  } else showToast(res?.message || "Gagal menyimpan", "bad");
+                } else {
+                  const a = anggota.find((x) => x.ID === payload.anggotaId);
+                  setArisan([...arisan, {
+                    ID: "AR" + (arisan.length + 1), Bulan: payload.bulan, AnggotaID: payload.anggotaId,
+                    NamaAnggota: a?.Nama || "", StatusBayar: payload.statusBayar, Nominal: payload.nominal, Pemenang: payload.pemenang,
+                  }]);
+                  showToast("Data arisan tersimpan (mode demo)");
+                }
+              }}
+            />
+          )}
+          {tab === "iuran" && (
+            <IuranTab
+              iuran={iuran}
+              anggota={anggota}
+              isAdmin={isAdmin}
+              onCatat={async (payload) => {
+                if (apiUrl) {
+                  const res = await apiCall("catatIuran", payload, "POST");
+                  if (res?.success) {
+                    showToast("Iuran tersimpan");
+                    const ir = await apiCall("getIuran");
+                    if (ir?.success) setIuran(ir.data);
+                  } else showToast(res?.message || "Gagal menyimpan", "bad");
+                } else {
+                  const a = anggota.find((x) => x.ID === payload.anggotaId);
+                  setIuran([...iuran, {
+                    ID: "IR" + (iuran.length + 1), Bulan: payload.bulan, AnggotaID: payload.anggotaId,
+                    NamaAnggota: a?.Nama || "", StatusBayar: payload.statusBayar, Nominal: payload.nominal,
+                  }]);
+                  showToast("Iuran tersimpan (mode demo)");
+                }
+              }}
+            />
+          )}
+          {tab === "pengaturan" && (
+            <PengaturanTab
+              apiUrlDraft={apiUrlDraft}
+              setApiUrlDraft={setApiUrlDraft}
+              onSave={() => { setApiUrl(apiUrlDraft.trim()); showToast(apiUrlDraft.trim() ? "Tersambung ke Google Sheets" : "Kembali ke mode demo"); }}
+              isConnected={isConnected}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* LOGIN MODAL */}
+      {loginOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(31,61,43,0.45)" }}>
+          <div className="w-full max-w-sm rounded-xl p-6" style={{ background: "#FBF8F2" }}>
+            <h3 className="text-xl mb-1" style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, color: "#1F3D2B" }}>Masuk sebagai Admin</h3>
+            <p className="text-xs mb-4" style={{ color: "#6B6A5E" }}>
+              {isConnected ? "Gunakan akun admin yang terdaftar di tab Admin pada Google Sheet." : "Mode demo — gunakan admin / admin123"}
+            </p>
+            <label className="block text-xs font-medium mb-1" style={{ color: "#4A4436" }}>Username</label>
+            <input className="w-full mb-3 px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}
+              value={loginForm.username} onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })} />
+            <label className="block text-xs font-medium mb-1" style={{ color: "#4A4436" }}>Password</label>
+            <input type="password" className="w-full mb-2 px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}
+              value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} />
+            {loginError && <p className="text-xs mb-2" style={{ color: "#8B3A2B" }}>{loginError}</p>}
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setLoginOpen(false)} className="flex-1 px-3 py-2 rounded-lg text-sm border" style={{ borderColor: "#E4DFD0" }}>Batal</button>
+              <button onClick={handleLogin} className="flex-1 px-3 py-2 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>Masuk</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ================= DASHBOARD =================
+function Dashboard({ stats, antreanPupuk, arisan }) {
+  const pemenangTerbaru = [...arisan].reverse().find((a) => a.Pemenang === "Y");
+  return (
+    <div>
+      <SectionHeader eyebrow="Ringkasan" title="Kondisi Kelompok Saat Ini" desc="Semua anggota bisa melihat halaman ini — transparansi adalah dasar keadilan." />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {[
+          ["Anggota Aktif", stats.totalAnggota, ""],
+          ["Pupuk Tersalurkan", stats.totalPupuk + " kg", ""],
+          ["Kas Arisan", formatRupiah(stats.totalArisan), ""],
+          ["Kas Iuran", formatRupiah(stats.totalIuran), ""],
+        ].map(([label, val]) => (
+          <div key={label} className="p-4 rounded-xl border" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+            <div className="text-xs mb-1" style={{ color: "#8FA383", fontFamily: "'IBM Plex Mono', monospace" }}>{label}</div>
+            <div className="text-2xl" style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, color: "#1F3D2B" }}>{val}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="p-5 rounded-xl border" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-semibold" style={{ color: "#1F3D2B" }}>Antrean Jatah Pupuk</h3>
+            <Stempel label="URUT ANTRE" />
+          </div>
+          <p className="text-xs mb-3" style={{ color: "#6B6A5E" }}>Urutan otomatis: yang paling lama belum dapat, didahulukan.</p>
+          <ol className="space-y-1.5">
+            {antreanPupuk.slice(0, 5).map((a, i) => (
+              <li key={a.id} className="flex items-center justify-between text-sm py-1.5" style={{ borderBottom: i < 4 ? "1px solid #EFEADC" : "none" }}>
+                <span><span style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#8FA383" }}>{String(i + 1).padStart(2, "0")}</span> &nbsp;{a.nama}</span>
+                <span className="text-xs" style={{ color: "#6B6A5E" }}>{a.terakhir ? `terakhir ${formatTanggal(a.terakhir)}` : "belum pernah dapat"}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="p-5 rounded-xl border" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+          <h3 className="text-base font-semibold mb-3" style={{ color: "#1F3D2B" }}>Arisan Terakhir</h3>
+          {pemenangTerbaru ? (
+            <div className="flex items-center gap-3">
+              <Stempel label="PEMENANG" />
+              <div>
+                <div className="font-medium" style={{ color: "#1F3D2B" }}>{pemenangTerbaru.NamaAnggota}</div>
+                <div className="text-xs" style={{ color: "#6B6A5E" }}>Bulan {bulanLabel(pemenangTerbaru.Bulan)}</div>
+              </div>
+            </div>
+          ) : <p className="text-sm" style={{ color: "#6B6A5E" }}>Belum ada data pemenang.</p>}
+          <p className="text-xs mt-4" style={{ color: "#6B6A5E" }}>Kocok arisan dilakukan manual saat pertemuan bulanan. Hasilnya dicatat di sini oleh pengurus.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ================= ANGGOTA =================
+function AnggotaTab({ anggota }) {
+  const [q, setQ] = useState("");
+  const filtered = anggota.filter((a) => a.Nama?.toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div>
+      <SectionHeader eyebrow="Registrasi" title="Data Anggota" desc="Riwayat lengkap setiap anggota tercatat dan bisa ditelusuri kapan saja." />
+      <input placeholder="Cari nama anggota..." value={q} onChange={(e) => setQ(e.target.value)}
+        className="mb-4 px-3 py-2 rounded-lg border text-sm w-full max-w-xs" style={{ borderColor: "#E4DFD0" }} />
+      <div className="rounded-xl border overflow-x-auto" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+        <table>
+          <thead className="ledger-head"><tr><th>ID</th><th>Nama</th><th>No. HP</th><th>Luas Lahan</th><th>Komoditas</th><th>Status</th></tr></thead>
+          <tbody>
+            {filtered.map((a) => (
+              <tr key={a.ID} className="ledger-row">
+                <td style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#8FA383" }}>{a.ID}</td>
+                <td className="font-medium">{a.Nama}</td>
+                <td>{a.NoHP}</td>
+                <td>{a.LuasLahan_Ha} Ha</td>
+                <td>{a.Komoditas}</td>
+                <td><Badge tone={a.Status === "Aktif" ? "good" : "neutral"}>{a.Status}</Badge></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ================= PUPUK =================
+function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi }) {
+  const [form, setForm] = useState({ tanggal: new Date().toISOString().slice(0, 10), jumlahPerOrang: 50, keterangan: "", kuota: Math.ceil(antreanPupuk.length / 2) });
+  const [pilihan, setPilihan] = useState(() => new Set(antreanPupuk.slice(0, form.kuota).map((a) => a.id)));
+  const [showForm, setShowForm] = useState(false);
+
+  function syncKuota(kuota) {
+    setForm({ ...form, kuota });
+    setPilihan(new Set(antreanPupuk.slice(0, kuota).map((a) => a.id)));
+  }
+
+  return (
+    <div>
+      <SectionHeader eyebrow="Rotasi Adil" title="Jatah Pupuk Phonska" desc="Saat stok terbatas, giliran ditentukan otomatis berdasarkan riwayat — bukan pilih-pilih. Semua anggota bisa melihat urutannya." />
+
+      {isAdmin && (
+        <div className="mb-6">
+          {!showForm ? (
+            <button onClick={() => setShowForm(true)} className="px-4 py-2.5 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>
+              + Catat Distribusi Baru
+            </button>
+          ) : (
+            <div className="p-5 rounded-xl border" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+              <h3 className="font-semibold mb-3" style={{ color: "#1F3D2B" }}>Catat Distribusi Pupuk</h3>
+              <div className="grid sm:grid-cols-3 gap-3 mb-4">
+                <div>
+                  <label className="block text-xs font-medium mb-1">Tanggal</label>
+                  <input type="date" value={form.tanggal} onChange={(e) => setForm({ ...form, tanggal: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Kg per orang yang dapat</label>
+                  <input type="number" value={form.jumlahPerOrang} onChange={(e) => setForm({ ...form, jumlahPerOrang: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Jumlah orang yang kebagian (stok cukup untuk)</label>
+                  <input type="number" min={0} max={antreanPupuk.length} value={form.kuota}
+                    onChange={(e) => syncKuota(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+                </div>
+              </div>
+              <label className="block text-xs font-medium mb-1">Keterangan</label>
+              <input value={form.keterangan} onChange={(e) => setForm({ ...form, keterangan: e.target.value })}
+                placeholder="mis. Distribusi bulan Agustus" className="w-full mb-4 px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+
+              <p className="text-xs mb-2" style={{ color: "#6B6A5E" }}>Sistem sudah memilih {form.kuota} anggota paling lama tidak dapat. Bisa disesuaikan manual jika perlu:</p>
+              <div className="max-h-56 overflow-y-auto rounded-lg border mb-4" style={{ borderColor: "#E4DFD0" }}>
+                {antreanPupuk.map((a) => (
+                  <label key={a.id} className="flex items-center gap-2 px-3 py-2 text-sm" style={{ borderBottom: "1px solid #EFEADC" }}>
+                    <input type="checkbox" checked={pilihan.has(a.id)} onChange={(e) => {
+                      const next = new Set(pilihan);
+                      e.target.checked ? next.add(a.id) : next.delete(a.id);
+                      setPilihan(next);
+                    }} />
+                    {a.nama} <span className="text-xs" style={{ color: "#8FA383" }}>({a.terakhir ? `terakhir ${formatTanggal(a.terakhir)}` : "belum pernah"})</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-sm border" style={{ borderColor: "#E4DFD0" }}>Batal</button>
+                <button
+                  onClick={() => { onDistribusi({ ...form, anggotaIdTerpilih: JSON.stringify([...pilihan]) }); setShowForm(false); }}
+                  className="px-4 py-2 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>
+                  Simpan Distribusi
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 className="text-sm font-semibold mb-2 uppercase tracking-wide" style={{ color: "#8FA383", fontFamily: "'IBM Plex Mono', monospace" }}>Urutan Antrean Saat Ini</h3>
+          <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+            {antreanPupuk.map((a, i) => (
+              <div key={a.id} className="flex items-center justify-between px-4 py-3 text-sm" style={{ borderBottom: "1px solid #EFEADC" }}>
+                <span><span style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#8FA383" }}>{String(i + 1).padStart(2, "0")}</span> &nbsp;{a.nama}</span>
+                <span className="text-xs" style={{ color: "#6B6A5E" }}>{a.terakhir ? formatTanggal(a.terakhir) : "belum pernah dapat"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold mb-2 uppercase tracking-wide" style={{ color: "#8FA383", fontFamily: "'IBM Plex Mono', monospace" }}>Riwayat Distribusi</h3>
+          <div className="rounded-xl border overflow-hidden max-h-[420px] overflow-y-auto" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+            <table>
+              <thead className="ledger-head" style={{ position: "sticky", top: 0, background: "#FFFEFB" }}><tr><th>Tanggal</th><th>Nama</th><th>Kg</th><th>Status</th></tr></thead>
+              <tbody>
+                {[...riwayat].reverse().map((r, idx) => (
+                  <tr key={r.ID || idx} className="ledger-row">
+                    <td className="text-xs">{formatTanggal(r.Tanggal)}</td>
+                    <td>{r.NamaAnggota}</td>
+                    <td>{r.Jumlah_Kg || "-"}</td>
+                    <td><Badge tone={r.Status === "Dapat" ? "good" : "warn"}>{r.Status}</Badge></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ================= ARISAN =================
+function ArisanTab({ arisan, anggota, isAdmin, onCatat }) {
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ bulan: new Date().toISOString().slice(0, 7), anggotaId: anggota[0]?.ID || "", statusBayar: "Lunas", nominal: 50000, pemenang: "N" });
+
+  const byBulan = useMemo(() => {
+    const map = {};
+    arisan.forEach((a) => { (map[a.Bulan] = map[a.Bulan] || []).push(a); });
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [arisan]);
+
+  return (
+    <div>
+      <SectionHeader eyebrow="Kocok Manual, Catat Digital" title="Arisan Bulanan" desc="Pengocokan dilakukan langsung saat pertemuan kelompok. Di sini hanya dicatat siapa bayar dan siapa menang." />
+
+      {isAdmin && (
+        <div className="mb-6">
+          {!showForm ? (
+            <button onClick={() => setShowForm(true)} className="px-4 py-2.5 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>+ Catat Data Arisan</button>
+          ) : (
+            <div className="p-5 rounded-xl border grid sm:grid-cols-2 gap-3" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+              <div>
+                <label className="block text-xs font-medium mb-1">Bulan</label>
+                <input type="month" value={form.bulan} onChange={(e) => setForm({ ...form, bulan: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Anggota</label>
+                <select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}>
+                  {anggota.map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Status Bayar</label>
+                <select value={form.statusBayar} onChange={(e) => setForm({ ...form, statusBayar: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}>
+                  <option>Lunas</option><option>Belum</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Nominal</label>
+                <input type="number" value={form.nominal} onChange={(e) => setForm({ ...form, nominal: Number(e.target.value) })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+              </div>
+              <div className="sm:col-span-2 flex items-center gap-2">
+                <input type="checkbox" checked={form.pemenang === "Y"} onChange={(e) => setForm({ ...form, pemenang: e.target.checked ? "Y" : "N" })} />
+                <label className="text-sm">Anggota ini pemenang kocokan bulan tersebut</label>
+              </div>
+              <div className="sm:col-span-2 flex gap-2 mt-1">
+                <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-sm border" style={{ borderColor: "#E4DFD0" }}>Batal</button>
+                <button onClick={() => { onCatat(form); setShowForm(false); }} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>Simpan</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-6">
+        {byBulan.map(([bulan, rows]) => (
+          <div key={bulan} className="rounded-xl border overflow-hidden" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+            <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "#F4EFE2" }}>
+              <span className="font-medium text-sm" style={{ color: "#1F3D2B" }}>{bulanLabel(bulan)}</span>
+              {rows.find((r) => r.Pemenang === "Y") && (
+                <span className="text-xs flex items-center gap-1" style={{ color: "#7A4B2A" }}>🏆 {rows.find((r) => r.Pemenang === "Y").NamaAnggota}</span>
+              )}
+            </div>
+            <table>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={r.ID || i} className="ledger-row">
+                    <td className="font-medium">{r.NamaAnggota}</td>
+                    <td>{formatRupiah(r.Nominal)}</td>
+                    <td><Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge></td>
+                    <td>{r.Pemenang === "Y" && <Badge tone="warn">Pemenang</Badge>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ================= IURAN =================
+function IuranTab({ iuran, anggota, isAdmin, onCatat }) {
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ bulan: new Date().toISOString().slice(0, 7), anggotaId: anggota[0]?.ID || "", statusBayar: "Lunas", nominal: 25000 });
+
+  const byBulan = useMemo(() => {
+    const map = {};
+    iuran.forEach((a) => { (map[a.Bulan] = map[a.Bulan] || []).push(a); });
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [iuran]);
+
+  return (
+    <div>
+      <SectionHeader eyebrow="Kas Kelompok" title="Iuran Wajib" desc="Status pembayaran setiap anggota, per bulan, terlihat oleh semua." />
+
+      {isAdmin && (
+        <div className="mb-6">
+          {!showForm ? (
+            <button onClick={() => setShowForm(true)} className="px-4 py-2.5 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>+ Catat Pembayaran Iuran</button>
+          ) : (
+            <div className="p-5 rounded-xl border grid sm:grid-cols-2 gap-3" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+              <div>
+                <label className="block text-xs font-medium mb-1">Bulan</label>
+                <input type="month" value={form.bulan} onChange={(e) => setForm({ ...form, bulan: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Anggota</label>
+                <select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}>
+                  {anggota.map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Status Bayar</label>
+                <select value={form.statusBayar} onChange={(e) => setForm({ ...form, statusBayar: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }}>
+                  <option>Lunas</option><option>Belum</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Nominal</label>
+                <input type="number" value={form.nominal} onChange={(e) => setForm({ ...form, nominal: Number(e.target.value) })} className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0" }} />
+              </div>
+              <div className="sm:col-span-2 flex gap-2 mt-1">
+                <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-sm border" style={{ borderColor: "#E4DFD0" }}>Batal</button>
+                <button onClick={() => { onCatat(form); setShowForm(false); }} className="px-4 py-2 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>Simpan</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-6">
+        {byBulan.map(([bulan, rows]) => {
+          const lunas = rows.filter((r) => r.StatusBayar === "Lunas").length;
+          return (
+            <div key={bulan} className="rounded-xl border overflow-hidden" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+              <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "#F4EFE2" }}>
+                <span className="font-medium text-sm" style={{ color: "#1F3D2B" }}>{bulanLabel(bulan)}</span>
+                <span className="text-xs" style={{ color: "#6B6A5E" }}>{lunas}/{rows.length} sudah bayar</span>
+              </div>
+              <table>
+                <tbody>
+                  {rows.map((r, i) => (
+                    <tr key={r.ID || i} className="ledger-row">
+                      <td className="font-medium">{r.NamaAnggota}</td>
+                      <td>{formatRupiah(r.Nominal)}</td>
+                      <td><Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ================= PENGATURAN =================
+function PengaturanTab({ apiUrlDraft, setApiUrlDraft, onSave, isConnected }) {
+  return (
+    <div>
+      <SectionHeader eyebrow="Koneksi Data" title="Pengaturan" desc="Hubungkan aplikasi ke Google Sheets kelompok tani lewat URL Apps Script." />
+      <div className="p-5 rounded-xl border max-w-xl" style={{ borderColor: "#E4DFD0", background: "#FFFEFB" }}>
+        <label className="block text-xs font-medium mb-1">URL Web App (Google Apps Script)</label>
+        <input value={apiUrlDraft} onChange={(e) => setApiUrlDraft(e.target.value)} placeholder="https://script.google.com/macros/s/xxxxx/exec"
+          className="w-full mb-3 px-3 py-2 rounded-lg border text-sm" style={{ borderColor: "#E4DFD0", fontFamily: "'IBM Plex Mono', monospace" }} />
+        <button onClick={onSave} className="px-4 py-2.5 rounded-lg text-sm font-medium" style={{ background: "#1F3D2B", color: "#FBF8F2" }}>Simpan & Sambungkan</button>
+        <p className="text-xs mt-3" style={{ color: "#6B6A5E" }}>
+          Status saat ini: {isConnected ? "✅ Tersambung ke Google Sheets" : "⚠️ Mode demo — data tidak tersimpan permanen"}
+        </p>
+        <div className="mt-5 pt-4 text-xs space-y-1" style={{ borderTop: "1px solid #EFEADC", color: "#6B6A5E" }}>
+          <p className="font-medium" style={{ color: "#4A4436" }}>Cara mendapatkan URL:</p>
+          <p>1. Buka file Code.gs yang sudah disiapkan</p>
+          <p>2. Ikuti langkah pemasangan di bagian atas file tersebut</p>
+          <p>3. Setelah deploy, salin URL web app ke kolom di atas</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
