@@ -588,7 +588,7 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat }) {
   const [form, setForm] = useState({
     bulan: new Date().toISOString().slice(0, 7),
     anggotaId: anggota[0]?.ID || "",
-    nominalIuran: 25000,
+    nominalIuran: 10000,
     nominalArisan: 50000,
     bayarIuran: false,
     bayarArisan: false,
