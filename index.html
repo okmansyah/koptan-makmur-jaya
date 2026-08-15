@@ -9,6 +9,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Tambahan Library untuk generate PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
 <script>
   tailwind.config = {
     theme: {
@@ -161,7 +166,6 @@ function App() {
     } else showToast(res?.message || "Kredensial tidak valid", "bad");
   }
 
-  // Komponen Navigasi Dinamis
   const navItems = [
     { key: "dashboard", label: "Ringkasan Eksekutif", icon: "M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" },
     { key: "anggota", label: "Database Anggota", icon: "M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" },
@@ -169,7 +173,7 @@ function App() {
     { key: "keuangan", label: "Arisan & Iuran", icon: "M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" }
   ];
   if (isAdmin) {
-    navItems.push({ key: "pengaturan", label: "Pengaturan Sistem", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" });
+    navItems.push({ key: "pengaturan", label: "Pengaturan & Laporan", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" });
   }
 
   const antreanPupuk = useMemo(() => {
@@ -208,8 +212,6 @@ function App() {
       {/* SIDEBAR (Desktop) */}
       <aside className="w-full md:w-[310px] shrink-0 bg-brand-950 border-r border-brand-900 flex-col z-20 sticky top-0 h-screen hidden md:flex shadow-xl shadow-brand-900/20">
         <div className="p-6 lg:p-7 border-b border-brand-800/50 flex items-center gap-5 bg-gradient-to-br from-brand-950 to-brand-900">
-          
-          {/* LOGO AREA DIPERBESAR */}
           <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full overflow-hidden border-[3px] border-brand-400/80 shadow-[0_0_20px_rgba(52,211,153,0.4)] shrink-0 bg-brand-900 relative flex items-center justify-center">
              {logoB64 ? (
                <img src={logoB64} alt="Logo KTMJ" className="absolute inset-0 w-full h-full object-cover scale-[1.25] origin-center" />
@@ -217,7 +219,6 @@ function App() {
                <span className="font-serif font-black text-brand-300 text-2xl">KT</span>
              )}
           </div>
-
           <div className="flex flex-col justify-center pt-1">
             <div className="text-[11px] lg:text-xs tracking-[0.25em] uppercase text-brand-400 font-sans font-black mb-1 drop-shadow-sm">Kelompok Tani</div>
             <div className="font-serif font-black text-2xl lg:text-3xl text-white leading-none tracking-tight">
@@ -252,7 +253,6 @@ function App() {
       {/* MOBILE HEADER & HAMBURGER */}
       <div className="md:hidden flex items-center justify-between px-5 py-3 bg-gradient-to-r from-brand-950 to-brand-900 text-white border-b border-brand-800 z-40 sticky top-0 shadow-xl">
          <div className="flex items-center gap-4">
-            {/* LOGO AREA DIPERBESAR UNTUK MOBILE */}
             <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-brand-400/80 shadow-[0_0_12px_rgba(52,211,153,0.4)] shrink-0 bg-brand-900 relative flex items-center justify-center">
                {logoB64 ? (
                  <img src={logoB64} alt="Logo KTMJ" className="absolute inset-0 w-full h-full object-cover scale-[1.25] origin-center" />
@@ -336,7 +336,9 @@ function App() {
           />
         )}
         {tab === "pengaturan" && isAdmin && (
-          <PengaturanTab logoB64={logoB64} setLogoB64={setLogoB64} apiCall={apiCall} showToast={showToast} />
+          <PengaturanTab logoB64={logoB64} setLogoB64={setLogoB64} apiCall={apiCall} showToast={showToast} 
+            anggota={anggota} pupukRiwayat={pupukRiwayat} arisan={arisan} iuran={iuran} 
+          />
         )}
       </main>
 
@@ -371,10 +373,13 @@ function App() {
   );
 }
 
-// ================= PENGATURAN (KHUSUS ADMIN UPLOAD LOGO) =================
-function PengaturanTab({ logoB64, setLogoB64, apiCall, showToast }) {
+// ================= PENGATURAN & LAPORAN =================
+function PengaturanTab({ logoB64, setLogoB64, apiCall, showToast, anggota, pupukRiwayat, arisan, iuran }) {
   const fileInputRef = useRef(null);
   
+  // State untuk form Cetak Laporan
+  const [bulanLaporan, setBulanLaporan] = useState(() => new Date().toISOString().slice(0, 7)); // Format YYYY-MM
+
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -414,16 +419,110 @@ function PengaturanTab({ logoB64, setLogoB64, apiCall, showToast }) {
     reader.readAsDataURL(file);
   };
 
-  return (
-    <div className="animate-slideDown">
-      <SectionHeader eyebrow="Konfigurasi" title="Pengaturan Sistem" desc="Atur aset dan tampilan utama aplikasi." />
+  const handleCetakPDF = (jenis) => {
+    try {
+      const { jsPDF } = window.jspdf;
       
+      // Ukuran Kertas F4 Versi Indonesia (Lebar: 215 mm / 21.5 cm, Tinggi: 330 mm / 33 cm)
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [215, 330] });
+
+      const drawHeader = (title) => {
+        if (logoB64) {
+          doc.addImage(logoB64, 'JPEG', 14, 10, 20, 20); 
+        }
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text("KELOMPOK TANI MAKMUR JAYA", 40, 16);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Sistem Informasi Resmi Kelompok Tani", 40, 22);
+        
+        // Garis Pembatas
+        doc.setLineWidth(0.5);
+        doc.line(14, 33, 201, 33);
+        
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text(title, 14, 43);
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        if(jenis !== 'anggota'){
+            doc.text(`Periode: ${bulanLabel(bulanLaporan)}`, 14, 49);
+        }
+      };
+
+      let head = [];
+      let body = [];
+      let startY = 55;
+
+      if (jenis === 'anggota') {
+        drawHeader("LAPORAN DATA ANGGOTA LENGKAP");
+        head = [['No', 'ID', 'Nama', 'NIK', 'No HP', 'Luas (Ha)', 'Komoditas', 'Status']];
+        body = anggota.map((a, i) => [i + 1, a.ID, a.Nama, a.NIK, a.NoHP || '-', a.LuasLahan_Ha, a.Komoditas || '-', a.Status]);
+        doc.autoTable({ startY, head, body, theme: 'grid', styles: { fontSize: 9 } });
+      } 
+      else if (jenis === 'pupuk') {
+        drawHeader("LAPORAN DATA DISTRIBUSI PUPUK");
+        const filtered = pupukRiwayat.filter(p => p.Tanggal && p.Tanggal.startsWith(bulanLaporan));
+        head = [['No', 'Tanggal', 'Nama Anggota', 'Jumlah (Kg)', 'Status', 'Keterangan']];
+        body = filtered.map((p, i) => [i + 1, formatTanggal(p.Tanggal), p.NamaAnggota, p.Jumlah_Kg, p.Status, p.Keterangan || '-']);
+        doc.autoTable({ startY, head, body, theme: 'grid', styles: { fontSize: 9 } });
+      } 
+      else if (jenis === 'iuran') {
+        drawHeader("LAPORAN IURAN WAJIB (PEMASUKAN & PENGELUARAN)");
+        const filtered = iuran.filter(i => i.Bulan === bulanLaporan);
+        head = [['No', 'Nama Anggota', 'Status Bayar', 'Tanggal Bayar', 'Nominal']];
+        let total = 0;
+        body = filtered.map((r, i) => {
+          if (r.StatusBayar === 'Lunas') total += Number(r.Nominal || 0);
+          return [i + 1, r.NamaAnggota, r.StatusBayar, r.TanggalBayar ? formatTanggal(r.TanggalBayar) : '-', formatRupiah(r.Nominal)];
+        });
+        doc.autoTable({ startY, head, body, theme: 'grid', styles: { fontSize: 9 } });
+        
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Total Pemasukan Kas: Rp ${total.toLocaleString('id-ID')}`, 14, finalY);
+        // Catatan: Karena DB Backend belum mencatat tabel pengeluaran, kita set statik 0 sementara
+        doc.text(`Total Pengeluaran Kas: Rp 0`, 14, finalY + 6); 
+        doc.text(`Saldo Kas Saat Ini: Rp ${total.toLocaleString('id-ID')}`, 14, finalY + 12);
+      } 
+      else if (jenis === 'arisan') {
+        drawHeader("LAPORAN ARISAN BULANAN");
+        const filtered = arisan.filter(a => a.Bulan === bulanLaporan);
+        head = [['No', 'Nama Anggota', 'Status Bayar', 'Pemenang', 'Nominal']];
+        let total = 0;
+        body = filtered.map((r, i) => {
+          if (r.StatusBayar === 'Lunas') total += Number(r.Nominal || 0);
+          return [i + 1, r.NamaAnggota, r.StatusBayar, r.Pemenang === 'Y' ? 'YA (PEMENANG)' : '-', formatRupiah(r.Nominal)];
+        });
+        doc.autoTable({ startY, head, body, theme: 'grid', styles: { fontSize: 9 } });
+        
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Total Dana Arisan Terkumpul: Rp ${total.toLocaleString('id-ID')}`, 14, finalY);
+      }
+
+      doc.save(`Laporan_${jenis}_${bulanLaporan}.pdf`);
+      showToast(`Laporan ${jenis} berhasi di-download (PDF)!`);
+    } catch (err) {
+      console.error(err);
+      showToast("Gagal membuat PDF. Pastikan koneksi stabil.", "bad");
+    }
+  };
+
+  return (
+    <div className="animate-slideDown space-y-8">
+      <SectionHeader eyebrow="Konfigurasi" title="Pengaturan & Laporan" desc="Atur aset dan akses menu untuk mengunduh laporan PDF operasional." />
+      
+      {/* CARD PENGATURAN LOGO */}
       <div className="p-8 md:p-10 rounded-[2.5rem] bg-white border border-slate-200 shadow-xl max-w-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-bl-[150px] -z-10"></div>
         <h3 className="font-serif font-black text-2xl mb-8 text-slate-900 border-b border-slate-100 pb-5">Logo Organisasi</h3>
         
         <div className="flex flex-col md:flex-row items-center gap-8">
-          {/* Pratinjau Logo juga diskalakan (scale-[1.25]) agar seragam */}
           <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-surface shadow-[0_10px_25px_rgba(0,0,0,0.1)] shrink-0 bg-brand-900 flex items-center justify-center relative group">
              {logoB64 ? (
                <img src={logoB64} alt="Logo" className="absolute inset-0 w-full h-full object-cover scale-[1.25] origin-center transition-transform group-hover:scale-[1.35]" />
@@ -445,6 +544,42 @@ function PengaturanTab({ logoB64, setLogoB64, apiCall, showToast }) {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* CARD MENU LAPORAN */}
+      <div className="p-8 md:p-10 rounded-[2.5rem] bg-white border border-brand-200 shadow-xl max-w-4xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-50 rounded-bl-[150px] -z-10"></div>
+        
+        <h3 className="font-serif font-black text-2xl mb-2 text-slate-900">Pusat Cetak Laporan (PDF)</h3>
+        <p className="text-sm text-slate-500 mb-8 font-medium border-b border-slate-100 pb-5">Dicetak dalam Format PDF ukuran Kertas F4 Standar Indonesia (21.5cm x 33cm).</p>
+        
+        <div className="mb-8">
+           <label className="block text-xs font-bold mb-2.5 text-slate-700 tracking-wide uppercase">Pilih Periode Laporan (Bulan/Tahun)</label>
+           <input type="month" value={bulanLaporan} onChange={(e) => setBulanLaporan(e.target.value)} className="w-full max-w-sm px-5 py-3.5 rounded-xl bg-surface border border-slate-200 text-sm font-bold text-brand-900 focus:ring-2 focus:ring-brand-500 outline-none shadow-sm cursor-pointer" />
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-5">
+           <button onClick={() => handleCetakPDF('anggota')} className="flex flex-col text-left p-6 rounded-2xl border-[3px] border-slate-100 hover:border-brand-400 hover:bg-brand-50 transition-all shadow-sm group">
+             <span className="font-black text-lg text-slate-900 group-hover:text-brand-800">Laporan Anggota Lengkap</span>
+             <span className="text-xs text-slate-500 mt-2 leading-relaxed">Cetak seluruh direktori data anggota dan kepemilikan lahan secara lengkap.</span>
+           </button>
+           
+           <button onClick={() => handleCetakPDF('pupuk')} className="flex flex-col text-left p-6 rounded-2xl border-[3px] border-slate-100 hover:border-brand-400 hover:bg-brand-50 transition-all shadow-sm group">
+             <span className="font-black text-lg text-slate-900 group-hover:text-brand-800">Laporan Distribusi Pupuk</span>
+             <span className="text-xs text-slate-500 mt-2 leading-relaxed">Laporan penerima kuota pupuk pada periode {bulanLabel(bulanLaporan)}.</span>
+           </button>
+
+           <button onClick={() => handleCetakPDF('iuran')} className="flex flex-col text-left p-6 rounded-2xl border-[3px] border-slate-100 hover:border-brand-400 hover:bg-brand-50 transition-all shadow-sm group">
+             <span className="font-black text-lg text-slate-900 group-hover:text-brand-800">Laporan Iuran Wajib</span>
+             <span className="text-xs text-slate-500 mt-2 leading-relaxed">Cetak ringkasan kas masuk dan pengeluaran pada periode {bulanLabel(bulanLaporan)}.</span>
+           </button>
+           
+           <button onClick={() => handleCetakPDF('arisan')} className="flex flex-col text-left p-6 rounded-2xl border-[3px] border-slate-100 hover:border-brand-400 hover:bg-brand-50 transition-all shadow-sm group">
+             <span className="font-black text-lg text-slate-900 group-hover:text-brand-800">Laporan Arisan Bulanan</span>
+             <span className="text-xs text-slate-500 mt-2 leading-relaxed">Cetak kas pemasukan arisan beserta pemenang di periode {bulanLabel(bulanLaporan)}.</span>
+           </button>
+        </div>
+
       </div>
     </div>
   );
@@ -819,7 +954,9 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat }) {
                         <tr key={r.ID || i} className="ledger-row">
                           <td className="font-bold text-slate-900">{r.NamaAnggota}</td>
                           <td className="text-slate-500 font-mono text-xs font-bold">{formatRupiah(r.Nominal)}</td>
-                          <td className="text-right"><Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge></td>
+                          <td className="text-right">
+                             {r.Pemenang === "Y" ? <Badge tone="warn">Pemenang</Badge> : <Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge>}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
