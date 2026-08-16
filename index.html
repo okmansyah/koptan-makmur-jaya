@@ -77,6 +77,7 @@ function formatTanggal(d) {
 function formatRupiah(n) { return "Rp " + Number(n || 0).toLocaleString("id-ID"); }
 function bulanLabel(b) {
   if (!b) return "-"; const [y, m] = String(b).split("-");
+  if (!y || !m || isNaN(m)) return String(b);
   return `${BULAN_ID[parseInt(m, 10) - 1]} ${y}`;
 }
 
@@ -185,9 +186,9 @@ function App() {
   }
 
   const antreanPupuk = useMemo(() => {
-    const aktif = anggota.filter((a) => a.Status === "Aktif");
+    const aktif = (anggota || []).filter((a) => a.Status === "Aktif");
     const list = aktif.map((a) => {
-      const riwayatSaya = pupukRiwayat.filter((r) => r.AnggotaID === a.ID && r.Status === "Dapat");
+      const riwayatSaya = (pupukRiwayat || []).filter((r) => r.AnggotaID === a.ID && r.Status === "Dapat");
       let terakhir = null;
       riwayatSaya.forEach((r) => { const t = new Date(r.Tanggal); if (!terakhir || t > terakhir) terakhir = t; });
       return { id: a.ID, nama: a.Nama, terakhir, totalDapat: riwayatSaya.length };
@@ -201,21 +202,24 @@ function App() {
   }, [anggota, pupukRiwayat]);
 
   const stats = useMemo(() => {
-    const tIuran = iuran.filter((i) => i.StatusBayar === "Lunas").reduce((s, i) => s + Number(i.Nominal || 0), 0);
-    const tKeluar = pengeluaran.reduce((s, p) => s + Number(p.Nominal || 0), 0);
+    const tIuran = (iuran || []).filter((i) => i.StatusBayar === "Lunas").reduce((s, i) => s + Number(i.Nominal || 0), 0);
+    const tKeluar = (pengeluaran || []).reduce((s, p) => s + Number(p.Nominal || 0), 0);
     const saldoKas = tIuran - tKeluar;
 
     let arisanPerBulan = {};
-    arisan.forEach(a => { arisanPerBulan[a.Bulan] = (arisanPerBulan[a.Bulan] || 0) + Number(a.Nominal || 0); });
-    const bulanTerakhir = Object.keys(arisanPerBulan).sort().reverse()[0];
+    (arisan || []).forEach(a => { 
+       if(a.Bulan) arisanPerBulan[a.Bulan] = (arisanPerBulan[a.Bulan] || 0) + Number(a.Nominal || 0); 
+    });
+    const keys = Object.keys(arisanPerBulan).sort().reverse();
+    const bulanTerakhir = keys.length > 0 ? keys[0] : null;
     const jumlahMenangArisan = bulanTerakhir ? arisanPerBulan[bulanTerakhir] : 0;
 
     return {
-      totalAnggota: anggota.filter((a) => a.Status === "Aktif").length,
+      totalAnggota: (anggota || []).filter((a) => a.Status === "Aktif").length,
       saldoKas: saldoKas,
       jumlahMenangArisan: jumlahMenangArisan,
       totalPengeluaran: tKeluar,
-      totalPupuk: pupukRiwayat.filter((p) => p.Status === "Dapat").reduce((s, p) => s + Number(p.Jumlah_Kg || 0), 0)
+      totalPupuk: (pupukRiwayat || []).filter((p) => p.Status === "Dapat").reduce((s, p) => s + Number(p.Jumlah_Kg || 0), 0)
     };
   }, [anggota, iuran, arisan, pengeluaran, pupukRiwayat]);
 
@@ -358,13 +362,77 @@ function App() {
   );
 }
 
+// ================= KOMPONEN TAB: DASHBOARD =================
+function Dashboard({ stats, antreanPupuk, arisan }) {
+  // Sortir pemenang arisan secara aman 
+  const daftarPemenang = [...(arisan || [])]
+    .filter((a) => a.Pemenang === "Y")
+    .sort((a, b) => String(b.Bulan || "").localeCompare(String(a.Bulan || "")));
+
+  return (
+    <div className="animate-slideDown">
+      <SectionHeader eyebrow="Overview" title="Dashboard Utama" desc="Laporan transparan operasional dan keuangan kelompok." />
+      
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
+        {[
+          ["Saldo Kas Kelompok", formatRupiah(stats.saldoKas), ""],
+          ["Nilai Menang Arisan", formatRupiah(stats.jumlahMenangArisan), ""],
+          ["Total Pengeluaran", formatRupiah(stats.totalPengeluaran), ""],
+          ["Anggota Aktif", stats.totalAnggota, ""],
+        ].map(([label, val]) => (
+          <div key={label} className="p-6 rounded-[2rem] bg-white border border-slate-200 shadow-sm hover:border-brand-400 hover:shadow-lg transition-all">
+            <div className="text-[10px] md:text-xs mb-3 text-slate-500 font-bold uppercase tracking-widest">{label}</div>
+            <div className="text-xl md:text-3xl font-serif font-black text-brand-950 tracking-tight whitespace-nowrap">{val}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
+        <div className="p-7 md:p-8 rounded-[2rem] bg-white border border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-48 h-48 bg-brand-50 rounded-full -z-10"></div>
+          <h3 className="text-xl font-bold mb-2 text-slate-900">Antrean Jatah Pupuk</h3>
+          <p className="text-sm mb-6 text-slate-500 font-medium">Prioritas otomatis bagi anggota yang paling lama belum mendapatkan subsidi.</p>
+          <div className="space-y-3.5">
+            {antreanPupuk.slice(0, 5).map((a, i) => (
+              <div key={a.id} className="flex items-center justify-between text-sm p-4 rounded-2xl bg-surface border border-slate-200">
+                <span className="font-bold text-slate-800"><span className="text-slate-400 font-mono mr-4 text-xs bg-white px-2 py-1 rounded-md">{String(i + 1).padStart(2, "0")}</span>{a.nama}</span>
+                <span className="text-xs font-bold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">{a.terakhir ? formatTanggal(a.terakhir) : "Belum Pernah"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="p-7 md:p-8 rounded-[2rem] bg-white border border-slate-200 shadow-sm relative overflow-hidden flex flex-col">
+          <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-accent-50 rounded-full -z-10"></div>
+          <h3 className="text-xl font-bold mb-6 text-slate-900">Histori Pemenang Arisan</h3>
+          {daftarPemenang.length > 0 ? (
+            <div className="space-y-3.5 max-h-[350px] overflow-y-auto hide-scroll pr-2 z-10 relative">
+              {daftarPemenang.map((p, i) => (
+                <div key={p.ID || i} className="flex items-center gap-4 bg-gradient-to-br from-accent-50 to-orange-50/50 p-4 rounded-2xl border border-accent-200 shadow-sm">
+                  <div className="w-12 h-12 flex items-center justify-center bg-white rounded-xl text-2xl shadow-sm shrink-0 border border-accent-100">🏆</div>
+                  <div>
+                    <div className="font-black text-slate-900 text-lg tracking-tight leading-none mb-1.5">{p.NamaAnggota}</div>
+                    <div className="text-[10px] text-accent-800 font-bold bg-accent-200/50 inline-block px-2.5 py-1 rounded-md uppercase tracking-wider">Periode {bulanLabel(p.Bulan)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500 bg-surface p-6 rounded-3xl text-center border border-slate-200 font-medium">Belum ada histori pemenang tercatat.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ================= KOMPONEN TAB: ANGGOTA =================
 function AnggotaTab({ anggota, isAdmin, apiCall, onRefresh, showToast, handleDelete, handleUpdate }) {
   const [q, setQ] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(null);
 
-  const filtered = anggota.filter((a) => a.Nama?.toLowerCase().includes(q.toLowerCase()));
+  const filtered = (anggota || []).filter((a) => a.Nama?.toLowerCase().includes(q.toLowerCase()));
 
   const openForm = (data = null) => {
     if (data) setForm(data); else setForm({ ID: "", Nama: "", NIK: "", NoHP: "", LuasLahan_Ha: "", Komoditas: "", Status: "Aktif" });
@@ -485,7 +553,7 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi, setEditModal, 
         <table className="ledger-table min-w-full">
           <thead className="ledger-head"><tr><th>Tanggal</th><th>Nama</th><th>Total</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
           <tbody>
-            {[...riwayat].reverse().map(r => (
+            {[...(riwayat || [])].reverse().map(r => (
               <tr key={r.ID} className="ledger-row">
                 <td className="text-xs">{formatTanggal(r.Tanggal)}</td>
                 <td className="font-bold">{r.NamaAnggota}</td>
@@ -509,7 +577,7 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi, setEditModal, 
 // ================= KOMPONEN TAB: KEUANGAN =================
 function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, handleDelete }) {
   const [form, setForm] = useState({
-    bulan: new Date().toISOString().slice(0, 7), anggotaId: anggota[0]?.ID || "",
+    bulan: new Date().toISOString().slice(0, 7), anggotaId: anggota && anggota[0] ? anggota[0].ID : "",
     nominalIuran: 25000, nominalArisan: 50000, bayarIuran: false, bayarArisan: false, pemenangArisan: false
   });
 
@@ -527,7 +595,7 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
           <h3 className="font-serif font-black text-2xl mb-8 border-b pb-5">Posting Pembayaran Kas</h3>
           <div className="grid md:grid-cols-4 gap-5 mb-8">
             <div><label className="block text-xs font-bold mb-2">Periode</label><input type="month" value={form.bulan} onChange={(e) => setForm({ ...form, bulan: e.target.value })} className="w-full px-5 py-3.5 rounded-xl border bg-surface font-bold" /></div>
-            <div><label className="block text-xs font-bold mb-2">Anggota</label><select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-5 py-3.5 rounded-xl border bg-surface font-bold">{anggota.map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}</select></div>
+            <div><label className="block text-xs font-bold mb-2">Anggota</label><select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-5 py-3.5 rounded-xl border bg-surface font-bold">{(anggota || []).map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}</select></div>
             <div><label className="block text-xs font-bold mb-2">Tarif Iuran</label><input type="number" value={form.nominalIuran} onChange={(e) => setForm({ ...form, nominalIuran: Number(e.target.value) })} className="w-full px-5 py-3.5 rounded-xl border bg-surface" /></div>
             <div><label className="block text-xs font-bold mb-2">Tarif Arisan</label><input type="number" value={form.nominalArisan} onChange={(e) => setForm({ ...form, nominalArisan: Number(e.target.value) })} className="w-full px-5 py-3.5 rounded-xl border bg-surface" /></div>
           </div>
@@ -551,7 +619,7 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
             <table className="ledger-table">
               <thead className="ledger-head"><tr><th>Nama</th><th>Bulan</th><th>Nominal</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
               <tbody>
-                {[...iuran].reverse().map(r => (
+                {[...(iuran || [])].reverse().map(r => (
                   <tr key={r.ID} className="ledger-row">
                     <td className="font-bold">{r.NamaAnggota}</td>
                     <td className="text-xs">{bulanLabel(r.Bulan)}</td>
@@ -576,7 +644,7 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
             <table className="ledger-table">
               <thead className="ledger-head"><tr><th>Nama</th><th>Bulan</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
               <tbody>
-                {[...arisan].reverse().map(r => (
+                {[...(arisan || [])].reverse().map(r => (
                   <tr key={r.ID} className="ledger-row">
                     <td className="font-bold">{r.NamaAnggota}</td>
                     <td className="text-xs">{bulanLabel(r.Bulan)}</td>
@@ -628,7 +696,7 @@ function PengeluaranTab({ pengeluaran, isAdmin, setEditModal, handleDelete, apiC
         <table className="ledger-table">
           <thead className="ledger-head"><tr><th>Tgl</th><th>Keterangan</th><th>Kategori</th><th>Nominal</th>{isAdmin && <th>Aksi</th>}</tr></thead>
           <tbody>
-            {[...pengeluaran].reverse().map(p => (
+            {[...(pengeluaran || [])].reverse().map(p => (
               <tr key={p.ID} className="ledger-row">
                 <td className="text-xs text-slate-500 font-bold">{formatTanggal(p.Tanggal)}</td>
                 <td className="font-bold text-slate-900">{p.Keterangan}</td>
@@ -649,13 +717,13 @@ function PengeluaranTab({ pengeluaran, isAdmin, setEditModal, handleDelete, apiC
   );
 }
 
-// ================= PUSAT GALERI (PUBLIK) =================
+// ================= KOMPONEN TAB: PUSAT GALERI (PUBLIK) =================
 function GaleriTab({ galeri, isAdmin, handleDelete }) {
   return (
     <div className="animate-slideDown">
       <SectionHeader eyebrow="Dokumentasi" title="Pusat Galeri" desc="Kumpulan dokumentasi kegiatan kelompok tani." />
       
-      {galeri.length === 0 ? (
+      {(!galeri || galeri.length === 0) ? (
         <div className="p-10 text-center bg-white border border-slate-200 rounded-[2rem] shadow-sm text-slate-500 font-medium">Belum ada dokumentasi yang diunggah.</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -679,9 +747,9 @@ function GaleriTab({ galeri, isAdmin, handleDelete }) {
   );
 }
 
-// ================= PENGATURAN & LAPORAN (SUB-TAB SYSTEM) =================
+// ================= KOMPONEN TAB: PENGATURAN & LAPORAN (SUB-TAB SYSTEM) =================
 function PengaturanTab({ logoB64, setLogoB64, kopSurat, setKopSurat, apiCall, showToast, anggota, pupukRiwayat, arisan, iuran, pengeluaran, onRefresh }) {
-  const [activeSub, setActiveSub] = useState('kop'); // 'kop', 'galeri', 'cetak'
+  const [activeSub, setActiveSub] = useState('kop'); 
   const fileInputRef = useRef(null);
   const fileGaleriRef = useRef(null);
   const [bulanLaporan, setBulanLaporan] = useState(() => new Date().toISOString().slice(0, 7)); 
@@ -737,9 +805,9 @@ function PengaturanTab({ logoB64, setLogoB64, kopSurat, setKopSurat, apiCall, sh
 
       const drawHeader = (title) => {
         if (logoB64) doc.addImage(logoB64, 'JPEG', 14, 10, 22, 22); 
-        doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.text(kopSurat.nama.toUpperCase(), 40, 15);
-        doc.setFontSize(12); doc.setFont("helvetica", "normal"); doc.text(kopSurat.pemerintahan, 40, 21);
-        doc.setFontSize(9); doc.setFont("helvetica", "italic"); doc.text(kopSurat.alamat, 40, 26);
+        doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.text(kopSurat?.nama?.toUpperCase() || "NAMA ORGANISASI", 40, 15);
+        doc.setFontSize(12); doc.setFont("helvetica", "normal"); doc.text(kopSurat?.pemerintahan || "", 40, 21);
+        doc.setFontSize(9); doc.setFont("helvetica", "italic"); doc.text(kopSurat?.alamat || "", 40, 26);
         doc.setLineWidth(0.8); doc.line(14, 32, 201, 32);
         doc.setLineWidth(0.3); doc.line(14, 33, 201, 33);
         doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.text(title, 14, 43);
@@ -752,12 +820,12 @@ function PengaturanTab({ logoB64, setLogoB64, kopSurat, setKopSurat, apiCall, sh
       if (jenis === 'anggota') {
         drawHeader("LAPORAN DATA BUKU INDUK ANGGOTA");
         head = [['No', 'ID', 'Nama Lengkap', 'NIK', 'No HP', 'Luas (Ha)', 'Status']];
-        body = anggota.map((a, i) => [i + 1, a.ID, a.Nama, a.NIK, a.NoHP || '-', a.LuasLahan_Ha, a.Status]);
+        body = (anggota || []).map((a, i) => [i + 1, a.ID, a.Nama, a.NIK, a.NoHP || '-', a.LuasLahan_Ha, a.Status]);
         doc.autoTable({ startY, head, body, theme: 'grid', styles: { fontSize: 9 } });
       } else if (jenis === 'iuran_pengeluaran') {
         drawHeader("LAPORAN ARUS KAS KELOMPOK TANI");
-        const inF = iuran.filter(i => i.Bulan === bulanLaporan);
-        const outF = pengeluaran.filter(p => String(p.Tanggal).startsWith(bulanLaporan));
+        const inF = (iuran || []).filter(i => i.Bulan === bulanLaporan);
+        const outF = (pengeluaran || []).filter(p => String(p.Tanggal).startsWith(bulanLaporan));
         let totalIn = 0; let totalOut = 0;
         
         doc.setFont("helvetica", "bold"); doc.text("A. PEMASUKAN IURAN WAJIB", 14, startY);
@@ -808,9 +876,9 @@ function PengaturanTab({ logoB64, setLogoB64, kopSurat, setKopSurat, apiCall, sh
            <div className="p-8 rounded-[2.5rem] bg-white border border-slate-200 shadow-xl relative overflow-hidden">
              <h3 className="font-serif font-black text-xl mb-6 border-b pb-4">Desain Kop Surat PDF</h3>
              <div className="space-y-4 mb-6">
-                <div><label className="block text-xs font-bold mb-1">Nama Organisasi Utama (Font Besar)</label><input value={kopSurat.nama} onChange={e=>setKopSurat({...kopSurat, nama: e.target.value})} className="w-full p-3.5 rounded-xl border bg-surface font-bold text-slate-900" /></div>
-                <div><label className="block text-xs font-bold mb-1">Nama Pemerintahan / Afiliasi (Font Sedang)</label><input value={kopSurat.pemerintahan} onChange={e=>setKopSurat({...kopSurat, pemerintahan: e.target.value})} className="w-full p-3.5 rounded-xl border bg-surface text-sm" /></div>
-                <div><label className="block text-xs font-bold mb-1">Baris Alamat Lengkap (Font Kecil Italic)</label><textarea rows="2" value={kopSurat.alamat} onChange={e=>setKopSurat({...kopSurat, alamat: e.target.value})} className="w-full p-3.5 rounded-xl border bg-surface text-sm resize-none"></textarea></div>
+                <div><label className="block text-xs font-bold mb-1">Nama Organisasi Utama (Font Besar)</label><input value={kopSurat?.nama || ''} onChange={e=>setKopSurat({...kopSurat, nama: e.target.value})} className="w-full p-3.5 rounded-xl border bg-surface font-bold text-slate-900" /></div>
+                <div><label className="block text-xs font-bold mb-1">Nama Pemerintahan / Afiliasi (Font Sedang)</label><input value={kopSurat?.pemerintahan || ''} onChange={e=>setKopSurat({...kopSurat, pemerintahan: e.target.value})} className="w-full p-3.5 rounded-xl border bg-surface text-sm" /></div>
+                <div><label className="block text-xs font-bold mb-1">Baris Alamat Lengkap (Font Kecil Italic)</label><textarea rows="2" value={kopSurat?.alamat || ''} onChange={e=>setKopSurat({...kopSurat, alamat: e.target.value})} className="w-full p-3.5 rounded-xl border bg-surface text-sm resize-none"></textarea></div>
              </div>
              <button onClick={handleSimpanKop} className="px-6 py-3 rounded-xl text-sm font-bold bg-brand-900 text-white shadow-lg w-full">Simpan Format Kop Surat</button>
            </div>
