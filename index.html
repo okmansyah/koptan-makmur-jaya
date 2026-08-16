@@ -70,15 +70,35 @@ const { useState, useEffect, useMemo, useRef } = React;
 const API_URL = "https://script.google.com/macros/s/AKfycby_lgIDi9DTAyGDUtL_J_Op3MF0qKV-eiRA1dKd-pKcpfZ0FU_bwVfh-v3dEGL5UUTu/exec";
 
 const BULAN_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
 function formatTanggal(d) {
   if (!d) return "-"; const date = new Date(d); if (isNaN(date)) return String(d);
   return `${date.getDate()} ${BULAN_ID[date.getMonth()]} ${date.getFullYear()}`;
 }
+
 function formatRupiah(n) { return "Rp " + Number(n || 0).toLocaleString("id-ID"); }
+
+// Fungsi Penstabil Zona Waktu (Timezone Bug Fix)
+function extractMonth(b) {
+  if (!b) return "";
+  let str = String(b);
+  if (str.includes("T")) {
+    const d = new Date(str);
+    d.setHours(d.getHours() + 12); // Kompensasi pergeseran ke belakang oleh server Google
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+  return str.substring(0, 7);
+}
+
 function bulanLabel(b) {
-  if (!b) return "-"; const [y, m] = String(b).split("-");
-  if (!y || !m || isNaN(m)) return String(b);
-  return `${BULAN_ID[parseInt(m, 10) - 1]} ${y}`;
+  const val = extractMonth(b);
+  if (!val || val === "-") return "-";
+  const parts = val.split("-");
+  if (parts.length >= 2) {
+    const m = parseInt(parts[1], 10);
+    if (!isNaN(m) && m >= 1 && m <= 12) return `${BULAN_ID[m - 1]} ${parts[0]}`;
+  }
+  return val;
 }
 
 function Badge({ children, tone = "neutral" }) {
@@ -310,13 +330,15 @@ function App() {
         {tab === "anggota" && <AnggotaTab anggota={anggota} isAdmin={isAdmin} apiCall={apiCall} onRefresh={loadAllData} showToast={showToast} handleDelete={handleDelete} handleUpdate={handleUpdate} />}
         {tab === "pupuk" && <PupukTab antreanPupuk={antreanPupuk} riwayat={pupukRiwayat} isAdmin={isAdmin} setEditModal={setEditModal} handleDelete={handleDelete}
             onDistribusi={async (payload) => { const res = await apiCall("distribusiPupuk", payload, "POST"); if (res?.success) { showToast("Distribusi berhasil dicatat"); loadAllData(); } }} />}
-        {tab === "keuangan" && <KeuanganTab arisan={arisan} iuran={iuran} anggota={anggota} isAdmin={isAdmin} setEditModal={setEditModal} handleDelete={handleDelete} showToast={showToast}
+        
+        {tab === "keuangan" && <KeuanganTab arisan={arisan} iuran={iuran} anggota={anggota} isAdmin={isAdmin} setEditModal={setEditModal} handleDelete={handleDelete} showToast={showToast} apiCall={apiCall} onRefresh={loadAllData}
             onCatat={async (payload) => {
               let successCount = 0; let errorMsg = "";
               if (payload.bayarIuran) { const res = await apiCall("catatIuran", { bulan: payload.bulan, anggotaId: payload.anggotaId, statusBayar: "Lunas", nominal: payload.nominalIuran }, "POST"); if (res?.success) successCount++; else errorMsg += "Gagal iuran. "; }
               if (payload.bayarArisan || payload.pemenangArisan) { const res = await apiCall("catatArisan", { bulan: payload.bulan, anggotaId: payload.anggotaId, statusBayar: payload.bayarArisan ? "Lunas" : "Belum", nominal: payload.nominalArisan, pemenang: payload.pemenangArisan ? "Y" : "N" }, "POST"); if (res?.success) successCount++; else errorMsg += "Gagal arisan. "; }
               if (successCount > 0) { showToast("Data Keuangan Diperbarui!"); loadAllData(); } else if (errorMsg) showToast(errorMsg, "bad");
             }} />}
+            
         {tab === "pengeluaran" && <PengeluaranTab pengeluaran={pengeluaran} isAdmin={isAdmin} setEditModal={setEditModal} handleDelete={handleDelete} apiCall={apiCall} showToast={showToast} onRefresh={loadAllData} />}
         {tab === "galeri" && <GaleriTab galeri={galeri} isAdmin={isAdmin} handleDelete={handleDelete} />}
         {tab === "pengaturan" && isAdmin && <PengaturanTab logoB64={logoB64} setLogoB64={setLogoB64} kopSurat={kopSurat} setKopSurat={setKopSurat} apiCall={apiCall} showToast={showToast} anggota={anggota} pupukRiwayat={pupukRiwayat} arisan={arisan} iuran={iuran} pengeluaran={pengeluaran} onRefresh={loadAllData} />}
@@ -324,7 +346,7 @@ function App() {
 
       {/* FLOATING FOOTER */}
       <footer className="fixed bottom-0 left-0 right-0 z-40 bg-brand-950/95 backdrop-blur-md shadow-[0_-4px_15px_rgba(0,0,0,0.15)] text-brand-100 text-[10px] md:text-[11px] py-1.5 text-center font-mono tracking-widest border-t border-brand-800">
-         KELOMPOK TANI MAKMUR JAYA <span className="opacity-30 mx-1.5 md:mx-4">||</span> SAMBIREJO <span className="opacity-30 mx-1.5 md:mx-4">||</span> 2026 <span className="opacity-30 mx-1.5 md:mx-4">||</span> Okman Script
+         KELOMPOK TANI MAKMUR JAYA <span className="opacity-30 mx-1.5 md:mx-4">||</span> SAMBIREJO <span className="opacity-30 mx-1.5 md:mx-4">||</span> 2026 <span className="opacity-30 mx-1.5 md:mx-4">||</span> Okmansyah
       </footer>
 
       {/* UNIVERSAL EDIT MODAL */}
@@ -334,6 +356,13 @@ function App() {
             <div className="p-6 border-b border-slate-100 bg-slate-50"><h3 className="text-xl font-serif font-black text-slate-900">Ubah Data {editModal.type}</h3></div>
             <div className="p-6 space-y-4">
                {editModal.type === 'Pupuk' && (<><div><label className="block text-xs font-bold mb-1 text-slate-700">Jumlah (Kg)</label><input type="number" className="w-full p-3 rounded-lg bg-surface border outline-none" value={editModal.data.Jumlah_Kg} onChange={e => setEditModal({...editModal, data: {...editModal.data, Jumlah_Kg: e.target.value}})} /></div><div><label className="block text-xs font-bold mb-1 text-slate-700">Status</label><select className="w-full p-3 rounded-lg bg-surface border outline-none" value={editModal.data.Status} onChange={e => setEditModal({...editModal, data: {...editModal.data, Status: e.target.value}})}><option>Dapat</option><option>Menunggu</option></select></div></>)}
+               
+               {/* TAMBAHAN INPUT BULAN UNTUK ARISAN/IURAN (MANUAL UPDATE) */}
+               {(editModal.type === 'Arisan' || editModal.type === 'Iuran') && (
+                 <div><label className="block text-xs font-bold mb-1 text-slate-700">Periode Bulan</label>
+                 <input type="month" className="w-full p-3 rounded-lg bg-surface border outline-none font-bold" value={extractMonth(editModal.data.Bulan)} onChange={e => setEditModal({...editModal, data: {...editModal.data, Bulan: e.target.value}})} /></div>
+               )}
+               
                {(editModal.type === 'Arisan' || editModal.type === 'Iuran' || editModal.type === 'Pengeluaran') && (<div><label className="block text-xs font-bold mb-1 text-slate-700">Nominal (Rp)</label><input type="number" className="w-full p-3 rounded-lg bg-surface border outline-none" value={editModal.data.Nominal} onChange={e => setEditModal({...editModal, data: {...editModal.data, Nominal: e.target.value}})} /></div>)}
                {(editModal.type === 'Arisan' || editModal.type === 'Iuran') && (<div><label className="block text-xs font-bold mb-1 text-slate-700">Status Bayar</label><select className="w-full p-3 rounded-lg bg-surface border outline-none" value={editModal.data.StatusBayar} onChange={e => setEditModal({...editModal, data: {...editModal.data, StatusBayar: e.target.value}})}><option>Lunas</option><option>Belum</option></select></div>)}
                {editModal.type === 'Arisan' && (<div><label className="block text-xs font-bold mb-1 text-slate-700">Pemenang</label><select className="w-full p-3 rounded-lg bg-surface border outline-none" value={editModal.data.Pemenang} onChange={e => setEditModal({...editModal, data: {...editModal.data, Pemenang: e.target.value}})}><option>Y</option><option>N</option></select></div>)}
@@ -574,7 +603,7 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi, setEditModal, 
 }
 
 // ================= KOMPONEN TAB: KEUANGAN =================
-function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, handleDelete, showToast }) {
+function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, handleDelete, showToast, apiCall, onRefresh }) {
   const [form, setForm] = useState({
     bulan: new Date().toISOString().slice(0, 7), anggotaId: anggota && anggota[0] ? anggota[0].ID : "",
     nominalIuran: 25000, nominalArisan: 50000, bayarIuran: false, bayarArisan: false, pemenangArisan: false
@@ -582,10 +611,39 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
 
   const [editIuran, setEditIuran] = useState(false);
   const [editArisan, setEditArisan] = useState(false);
+  
+  // State untuk Fitur Koreksi Massal
+  const [bulk, setBulk] = useState({ oldBulan: '', newBulan: '', processing: false });
 
   const handleSubmit = () => {
     if (!form.bayarIuran && !form.bayarArisan && !form.pemenangArisan) return alert("Pilih satu instrumen keuangan.");
     onCatat(form); setForm({...form, bayarIuran: false, bayarArisan: false, pemenangArisan: false});
+  };
+
+  const handleBulkUpdate = async () => {
+    if (!bulk.oldBulan || !bulk.newBulan) return showToast("Isi kedua periode!", "warn");
+    setBulk({ ...bulk, processing: true });
+    showToast("Memproses pembaruan massal...", "neutral");
+    
+    let successCount = 0;
+    
+    // Proses update Arisan
+    const arisanUpdate = (arisan || []).filter(a => extractMonth(a.Bulan) === bulk.oldBulan);
+    for (let item of arisanUpdate) {
+      const res = await apiCall("updateData", { sheet: 'Arisan', id: item.ID, updates: JSON.stringify({ Bulan: bulk.newBulan }) }, "POST");
+      if(res?.success) successCount++;
+    }
+    
+    // Proses update Iuran
+    const iuranUpdate = (iuran || []).filter(i => extractMonth(i.Bulan) === bulk.oldBulan);
+    for (let item of iuranUpdate) {
+      const res = await apiCall("updateData", { sheet: 'Iuran', id: item.ID, updates: JSON.stringify({ Bulan: bulk.newBulan }) }, "POST");
+      if(res?.success) successCount++;
+    }
+
+    setBulk({ oldBulan: '', newBulan: '', processing: false });
+    showToast(`${successCount} data berhasil dikoreksi!`);
+    onRefresh();
   };
 
   return (
@@ -593,48 +651,69 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
       <SectionHeader eyebrow="Buku Kas Besar" title="Arisan & Iuran" />
       
       {isAdmin && (
-        <div className="mb-10 p-7 md:p-10 rounded-[2.5rem] bg-white border border-slate-200 shadow-xl">
-          <h3 className="font-serif font-black text-2xl mb-8 border-b pb-5">Posting Pembayaran Kas</h3>
-          <div className="grid md:grid-cols-4 gap-5 mb-8">
-            <div><label className="block text-xs font-bold mb-2">Periode</label><input type="month" value={form.bulan} onChange={(e) => setForm({ ...form, bulan: e.target.value })} className="w-full px-5 py-3.5 rounded-xl border bg-surface font-bold" /></div>
-            <div><label className="block text-xs font-bold mb-2">Anggota</label><select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-5 py-3.5 rounded-xl border bg-surface font-bold">{(anggota || []).map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}</select></div>
-            
-            {/* TARIF IURAN FITUR UBAH & SIMPAN */}
-            <div>
-              <label className="block text-xs font-bold mb-2">Tarif Iuran</label>
-              <div className="flex gap-2">
-                <input type="number" disabled={!editIuran} value={form.nominalIuran} onChange={(e) => setForm({ ...form, nominalIuran: Number(e.target.value) })} className={`w-full px-4 py-3.5 rounded-xl border ${!editIuran ? 'bg-slate-100 font-bold text-slate-600' : 'bg-surface font-bold text-slate-900 focus:ring-2 focus:ring-brand-500'}`} />
-                {!editIuran ? (
-                  <button type="button" onClick={() => setEditIuran(true)} className="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold shrink-0 transition-colors">Ubah</button>
-                ) : (
-                  <button type="button" onClick={() => { setEditIuran(false); if(showToast) showToast("Nominal Tarif Iuran Diperbarui!"); }} className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shrink-0 shadow transition-colors">Simpan</button>
-                )}
+        <div className="space-y-6 mb-10">
+          <div className="p-7 md:p-10 rounded-[2.5rem] bg-white border border-slate-200 shadow-xl">
+            <h3 className="font-serif font-black text-2xl mb-8 border-b pb-5">Posting Pembayaran Kas</h3>
+            <div className="grid md:grid-cols-4 gap-5 mb-8">
+              <div><label className="block text-xs font-bold mb-2">Periode</label><input type="month" value={form.bulan} onChange={(e) => setForm({ ...form, bulan: e.target.value })} className="w-full px-5 py-3.5 rounded-xl border bg-surface font-bold" /></div>
+              <div><label className="block text-xs font-bold mb-2">Anggota</label><select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-5 py-3.5 rounded-xl border bg-surface font-bold">{(anggota || []).map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}</select></div>
+              
+              {/* TARIF IURAN FITUR UBAH & SIMPAN */}
+              <div>
+                <label className="block text-xs font-bold mb-2">Tarif Iuran</label>
+                <div className="flex gap-2">
+                  <input type="number" disabled={!editIuran} value={form.nominalIuran} onChange={(e) => setForm({ ...form, nominalIuran: Number(e.target.value) })} className={`w-full px-4 py-3.5 rounded-xl border ${!editIuran ? 'bg-slate-100 font-bold text-slate-600' : 'bg-surface font-bold text-slate-900 focus:ring-2 focus:ring-brand-500'}`} />
+                  {!editIuran ? (
+                    <button type="button" onClick={() => setEditIuran(true)} className="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold shrink-0 transition-colors">Ubah</button>
+                  ) : (
+                    <button type="button" onClick={() => { setEditIuran(false); if(showToast) showToast("Nominal Tarif Iuran Diperbarui!"); }} className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shrink-0 shadow transition-colors">Simpan</button>
+                  )}
+                </div>
+              </div>
+
+              {/* TARIF ARISAN FITUR UBAH & SIMPAN */}
+              <div>
+                <label className="block text-xs font-bold mb-2">Tarif Arisan</label>
+                <div className="flex gap-2">
+                  <input type="number" disabled={!editArisan} value={form.nominalArisan} onChange={(e) => setForm({ ...form, nominalArisan: Number(e.target.value) })} className={`w-full px-4 py-3.5 rounded-xl border ${!editArisan ? 'bg-slate-100 font-bold text-slate-600' : 'bg-surface font-bold text-slate-900 focus:ring-2 focus:ring-brand-500'}`} />
+                  {!editArisan ? (
+                    <button type="button" onClick={() => setEditArisan(true)} className="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold shrink-0 transition-colors">Ubah</button>
+                  ) : (
+                    <button type="button" onClick={() => { setEditArisan(false); if(showToast) showToast("Nominal Tarif Arisan Diperbarui!"); }} className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shrink-0 shadow transition-colors">Simpan</button>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* TARIF ARISAN FITUR UBAH & SIMPAN */}
-            <div>
-              <label className="block text-xs font-bold mb-2">Tarif Arisan</label>
-              <div className="flex gap-2">
-                <input type="number" disabled={!editArisan} value={form.nominalArisan} onChange={(e) => setForm({ ...form, nominalArisan: Number(e.target.value) })} className={`w-full px-4 py-3.5 rounded-xl border ${!editArisan ? 'bg-slate-100 font-bold text-slate-600' : 'bg-surface font-bold text-slate-900 focus:ring-2 focus:ring-brand-500'}`} />
-                {!editArisan ? (
-                  <button type="button" onClick={() => setEditArisan(true)} className="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold shrink-0 transition-colors">Ubah</button>
-                ) : (
-                  <button type="button" onClick={() => { setEditArisan(false); if(showToast) showToast("Nominal Tarif Arisan Diperbarui!"); }} className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shrink-0 shadow transition-colors">Simpan</button>
-                )}
+            <div className="bg-surface p-6 rounded-3xl border border-slate-200 mb-8">
+              <label className="block text-xs font-bold uppercase mb-5">Tandai Pembayaran</label>
+              <div className="grid md:grid-cols-3 gap-5">
+                <label className={`flex items-center gap-5 cursor-pointer p-5 rounded-2xl border-[3px] shadow-sm ${form.bayarIuran ? "bg-brand-50 border-brand-500" : "bg-white border-slate-200"}`}><input type="checkbox" checked={form.bayarIuran} onChange={(e) => setForm({ ...form, bayarIuran: e.target.checked })} className="w-6 h-6 rounded" /><span className="font-black">Bayar Iuran</span></label>
+                <label className={`flex items-center gap-5 cursor-pointer p-5 rounded-2xl border-[3px] shadow-sm ${form.bayarArisan ? "bg-brand-50 border-brand-500" : "bg-white border-slate-200"}`}><input type="checkbox" checked={form.bayarArisan} onChange={(e) => setForm({ ...form, bayarArisan: e.target.checked })} className="w-6 h-6 rounded" /><span className="font-black">Bayar Arisan</span></label>
+                <label className={`flex items-center gap-5 cursor-pointer p-5 rounded-2xl border-[3px] shadow-sm ${form.pemenangArisan ? "bg-accent-50 border-accent-500" : "bg-white border-slate-200"}`}><input type="checkbox" checked={form.pemenangArisan} onChange={(e) => setForm({ ...form, pemenangArisan: e.target.checked })} className="w-6 h-6 rounded" /><span className="font-black">Menang Arisan</span></label>
               </div>
             </div>
+            <button onClick={handleSubmit} className="px-10 py-4 rounded-2xl text-sm font-bold bg-brand-900 text-white shadow-lg">Posting ke Database</button>
           </div>
 
-          <div className="bg-surface p-6 rounded-3xl border border-slate-200 mb-8">
-            <label className="block text-xs font-bold uppercase mb-5">Tandai Pembayaran</label>
-            <div className="grid md:grid-cols-3 gap-5">
-              <label className={`flex items-center gap-5 cursor-pointer p-5 rounded-2xl border-[3px] shadow-sm ${form.bayarIuran ? "bg-brand-50 border-brand-500" : "bg-white border-slate-200"}`}><input type="checkbox" checked={form.bayarIuran} onChange={(e) => setForm({ ...form, bayarIuran: e.target.checked })} className="w-6 h-6 rounded" /><span className="font-black">Bayar Iuran</span></label>
-              <label className={`flex items-center gap-5 cursor-pointer p-5 rounded-2xl border-[3px] shadow-sm ${form.bayarArisan ? "bg-brand-50 border-brand-500" : "bg-white border-slate-200"}`}><input type="checkbox" checked={form.bayarArisan} onChange={(e) => setForm({ ...form, bayarArisan: e.target.checked })} className="w-6 h-6 rounded" /><span className="font-black">Bayar Arisan</span></label>
-              <label className={`flex items-center gap-5 cursor-pointer p-5 rounded-2xl border-[3px] shadow-sm ${form.pemenangArisan ? "bg-accent-50 border-accent-500" : "bg-white border-slate-200"}`}><input type="checkbox" checked={form.pemenangArisan} onChange={(e) => setForm({ ...form, pemenangArisan: e.target.checked })} className="w-6 h-6 rounded" /><span className="font-black">Menang Arisan</span></label>
+          {/* FITUR KOREKSI PERIODE MASSAL */}
+          <div className="p-7 md:p-8 rounded-[2rem] bg-accent-50/50 border border-accent-200/60 shadow-sm relative overflow-hidden">
+            <h3 className="font-bold text-slate-900 mb-2">Koreksi Periode Massal</h3>
+            <p className="text-xs text-slate-500 mb-5 max-w-2xl">Fitur khusus jika terjadi kesalahan tanggal sistem. Mengubah semua data Iuran & Arisan dari periode lama ke periode baru secara bersamaan.</p>
+            <div className="flex flex-col md:flex-row gap-4 items-end max-w-3xl">
+              <div className="w-full">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Bulan Yang Salah</label>
+                <input type="month" disabled={bulk.processing} value={bulk.oldBulan} onChange={e => setBulk({...bulk, oldBulan: e.target.value})} className="w-full p-3 rounded-xl border bg-white outline-none focus:border-brand-400" />
+              </div>
+              <div className="w-full">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Ubah Menjadi</label>
+                <input type="month" disabled={bulk.processing} value={bulk.newBulan} onChange={e => setBulk({...bulk, newBulan: e.target.value})} className="w-full p-3 rounded-xl border bg-white outline-none focus:border-brand-400" />
+              </div>
+              <button disabled={bulk.processing} onClick={handleBulkUpdate} className="w-full md:w-auto whitespace-nowrap px-6 py-3.5 rounded-xl text-sm font-bold bg-brand-950 text-white shadow-md disabled:opacity-50">
+                {bulk.processing ? "Memproses..." : "Koreksi Semua"}
+              </button>
             </div>
           </div>
-          <button onClick={handleSubmit} className="px-10 py-4 rounded-2xl text-sm font-bold bg-brand-900 text-white shadow-lg">Posting ke Database</button>
         </div>
       )}
 
@@ -642,7 +721,7 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
       <div className="grid lg:grid-cols-2 gap-8 mt-8">
         <div className="overflow-hidden flex flex-col">
           <h3 className="text-xl font-serif font-black mb-5">Ledger Iuran</h3>
-          <div className="table-wrapper bg-white border border-slate-200 shadow-sm overflow-x-auto w-full">
+          <div className="table-wrapper bg-white border border-slate-200 shadow-sm w-full">
             <table className="ledger-table min-w-[550px]">
               <thead className="ledger-head"><tr><th>Nama</th><th>Bulan</th><th>Nominal</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
               <tbody>
@@ -667,7 +746,7 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
 
         <div className="overflow-hidden flex flex-col">
           <h3 className="text-xl font-serif font-black mb-5">Ledger Arisan</h3>
-          <div className="table-wrapper bg-white border border-slate-200 shadow-sm overflow-x-auto w-full">
+          <div className="table-wrapper bg-white border border-slate-200 shadow-sm w-full">
             <table className="ledger-table min-w-[550px]">
               <thead className="ledger-head"><tr><th>Nama</th><th>Bulan</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
               <tbody>
@@ -851,7 +930,7 @@ function PengaturanTab({ logoB64, setLogoB64, kopSurat, setKopSurat, apiCall, sh
         doc.autoTable({ startY, head, body, theme: 'grid', styles: { fontSize: 9 } });
       } else if (jenis === 'iuran_pengeluaran') {
         drawHeader("LAPORAN ARUS KAS KELOMPOK TANI");
-        const inF = (iuran || []).filter(i => i.Bulan === bulanLaporan);
+        const inF = (iuran || []).filter(i => extractMonth(i.Bulan) === bulanLaporan);
         const outF = (pengeluaran || []).filter(p => String(p.Tanggal).startsWith(bulanLaporan));
         let totalIn = 0; let totalOut = 0;
         
