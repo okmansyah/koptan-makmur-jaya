@@ -606,7 +606,7 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi, setEditModal, 
 function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, handleDelete, showToast, apiCall, onRefresh }) {
   const [form, setForm] = useState({
     bulan: new Date().toISOString().slice(0, 7), anggotaId: anggota && anggota[0] ? anggota[0].ID : "",
-    nominalIuran: 25000, nominalArisan: 50000, bayarIuran: false, bayarArisan: false, pemenangArisan: false
+    nominalIuran: 10000, nominalArisan: 50000, bayarIuran: false, bayarArisan: false, pemenangArisan: false
   });
 
   const [editIuran, setEditIuran] = useState(false);
