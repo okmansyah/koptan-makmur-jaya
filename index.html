@@ -78,7 +78,7 @@ function formatTanggal(d) {
 
 function formatRupiah(n) { return "Rp " + Number(n || 0).toLocaleString("id-ID"); }
 
-// Fungsi Penstabil Zona Waktu (Timezone Bug Fix)
+// Fungsi Penstabil Zona Waktu (Timezone Bug Fix) & Ekstraksi Bulan (YYYY-MM)
 function extractMonth(b) {
   if (!b) return "";
   let str = String(b);
@@ -328,6 +328,7 @@ function App() {
 
         {tab === "dashboard" && <Dashboard stats={stats} antreanPupuk={antreanPupuk} arisan={arisan} />}
         {tab === "anggota" && <AnggotaTab anggota={anggota} isAdmin={isAdmin} apiCall={apiCall} onRefresh={loadAllData} showToast={showToast} handleDelete={handleDelete} handleUpdate={handleUpdate} />}
+        
         {tab === "pupuk" && <PupukTab antreanPupuk={antreanPupuk} riwayat={pupukRiwayat} isAdmin={isAdmin} setEditModal={setEditModal} handleDelete={handleDelete}
             onDistribusi={async (payload) => { const res = await apiCall("distribusiPupuk", payload, "POST"); if (res?.success) { showToast("Distribusi berhasil dicatat"); loadAllData(); } }} />}
         
@@ -340,13 +341,14 @@ function App() {
             }} />}
             
         {tab === "pengeluaran" && <PengeluaranTab pengeluaran={pengeluaran} isAdmin={isAdmin} setEditModal={setEditModal} handleDelete={handleDelete} apiCall={apiCall} showToast={showToast} onRefresh={loadAllData} />}
+        
         {tab === "galeri" && <GaleriTab galeri={galeri} isAdmin={isAdmin} handleDelete={handleDelete} />}
         {tab === "pengaturan" && isAdmin && <PengaturanTab logoB64={logoB64} setLogoB64={setLogoB64} kopSurat={kopSurat} setKopSurat={setKopSurat} apiCall={apiCall} showToast={showToast} anggota={anggota} pupukRiwayat={pupukRiwayat} arisan={arisan} iuran={iuran} pengeluaran={pengeluaran} onRefresh={loadAllData} />}
       </main>
 
       {/* FLOATING FOOTER */}
       <footer className="fixed bottom-0 left-0 right-0 z-40 bg-brand-950/95 backdrop-blur-md shadow-[0_-4px_15px_rgba(0,0,0,0.15)] text-brand-100 text-[10px] md:text-[11px] py-1.5 text-center font-mono tracking-widest border-t border-brand-800">
-         KELOMPOK TANI MAKMUR JAYA <span className="opacity-30 mx-1.5 md:mx-4">||</span> SAMBIREJO <span className="opacity-30 mx-1.5 md:mx-4">||</span> 2026 <span className="opacity-30 mx-1.5 md:mx-4">||</span> Okmansyah
+         KOPTAN MAKMUR JAYA <span className="opacity-30 mx-1.5 md:mx-4">||</span> SAMBIREJO <span className="opacity-30 mx-1.5 md:mx-4">||</span> 2026 <span className="opacity-30 mx-1.5 md:mx-4">||</span> Okmansyah
       </footer>
 
       {/* UNIVERSAL EDIT MODAL */}
@@ -536,6 +538,19 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi, setEditModal, 
     setForm({ ...form, kuota }); setPilihan(new Set(antreanPupuk.slice(0, kuota).map((a) => a.id)));
   }
 
+  // ==== LOGIKA FILTER BULAN ====
+  const availableMonths = useMemo(() => {
+    const m = (riwayat||[]).map(x => extractMonth(x.Tanggal)).filter(Boolean);
+    return [...new Set(m)].sort().reverse();
+  }, [riwayat]);
+
+  const [filterBulan, setFilterBulan] = useState("");
+  useEffect(() => {
+    if (!filterBulan && availableMonths.length > 0) setFilterBulan(availableMonths[0]);
+  }, [availableMonths, filterBulan]);
+
+  const displayRiwayat = (riwayat || []).filter(x => filterBulan === "ALL" ? true : extractMonth(x.Tanggal) === filterBulan);
+
   return (
     <div className="animate-slideDown">
       <SectionHeader eyebrow="Operasional" title="Distribusi Pupuk" />
@@ -577,11 +592,24 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi, setEditModal, 
         </div>
       )}
 
-      <div className="table-wrapper bg-white border border-slate-200 shadow-sm mt-8">
+      {/* FILTER TABEL PUPUK */}
+      <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 mt-8">
+        <div className="flex items-center gap-3 w-full sm:w-auto mb-3 sm:mb-0">
+           <svg className="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+           <span className="font-bold text-slate-800 text-sm">Filter Riwayat Distribusi:</span>
+        </div>
+        <select value={filterBulan} onChange={(e) => setFilterBulan(e.target.value)} className="p-3 rounded-xl border bg-surface outline-none font-bold text-sm w-full sm:w-auto min-w-[200px] cursor-pointer">
+          {availableMonths.length === 0 && <option value="">Belum ada data</option>}
+          {availableMonths.map(m => <option key={m} value={m}>Bulan {bulanLabel(m)}</option>)}
+          <option value="ALL">Tampilkan Semua Bulan</option>
+        </select>
+      </div>
+
+      <div className="table-wrapper bg-white border border-slate-200 shadow-sm">
         <table className="ledger-table min-w-[550px]">
           <thead className="ledger-head"><tr><th>Tanggal</th><th>Nama</th><th>Total</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
           <tbody>
-            {[...(riwayat || [])].reverse().map(r => (
+            {[...displayRiwayat].reverse().map(r => (
               <tr key={r.ID} className="ledger-row">
                 <td className="text-xs">{formatTanggal(r.Tanggal)}</td>
                 <td className="font-bold">{r.NamaAnggota}</td>
@@ -595,6 +623,9 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi, setEditModal, 
                 )}
               </tr>
             ))}
+            {displayRiwayat.length === 0 && (
+              <tr><td colSpan="5" className="text-center py-8 text-slate-400 font-medium">Tidak ada data untuk periode terpilih.</td></tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -606,14 +637,26 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi, setEditModal, 
 function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, handleDelete, showToast, apiCall, onRefresh }) {
   const [form, setForm] = useState({
     bulan: new Date().toISOString().slice(0, 7), anggotaId: anggota && anggota[0] ? anggota[0].ID : "",
-    nominalIuran: 10000, nominalArisan: 50000, bayarIuran: false, bayarArisan: false, pemenangArisan: false
+    nominalIuran: 25000, nominalArisan: 50000, bayarIuran: false, bayarArisan: false, pemenangArisan: false
   });
 
   const [editIuran, setEditIuran] = useState(false);
   const [editArisan, setEditArisan] = useState(false);
-  
-  // State untuk Fitur Koreksi Massal
   const [bulk, setBulk] = useState({ oldBulan: '', newBulan: '', processing: false });
+
+  // ==== LOGIKA FILTER BULAN ====
+  const availableMonths = useMemo(() => {
+    const m = [...(arisan||[]), ...(iuran||[])].map(x => extractMonth(x.Bulan)).filter(Boolean);
+    return [...new Set(m)].sort().reverse();
+  }, [arisan, iuran]);
+
+  const [filterBulan, setFilterBulan] = useState("");
+  useEffect(() => {
+    if (!filterBulan && availableMonths.length > 0) setFilterBulan(availableMonths[0]);
+  }, [availableMonths, filterBulan]);
+
+  const displayIuran = (iuran || []).filter(x => filterBulan === "ALL" ? true : extractMonth(x.Bulan) === filterBulan);
+  const displayArisan = (arisan || []).filter(x => filterBulan === "ALL" ? true : extractMonth(x.Bulan) === filterBulan);
 
   const handleSubmit = () => {
     if (!form.bayarIuran && !form.bayarArisan && !form.pemenangArisan) return alert("Pilih satu instrumen keuangan.");
@@ -717,15 +760,27 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
         </div>
       )}
 
-      {/* TABEL LEDGER DENGAN NAVIGASI DIGESER (SCROLLABLE) */}
-      <div className="grid lg:grid-cols-2 gap-8 mt-8">
+      {/* FILTER TABEL KEUANGAN */}
+      <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 mt-8">
+        <div className="flex items-center gap-3 w-full sm:w-auto mb-3 sm:mb-0">
+           <svg className="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+           <span className="font-bold text-slate-800 text-sm">Filter Data Ledger:</span>
+        </div>
+        <select value={filterBulan} onChange={(e) => setFilterBulan(e.target.value)} className="p-3 rounded-xl border bg-surface outline-none font-bold text-sm w-full sm:w-auto min-w-[200px] cursor-pointer">
+          {availableMonths.length === 0 && <option value="">Belum ada data</option>}
+          {availableMonths.map(m => <option key={m} value={m}>Bulan {bulanLabel(m)}</option>)}
+          <option value="ALL">Tampilkan Semua Bulan</option>
+        </select>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-8 mt-2">
         <div className="overflow-hidden flex flex-col">
           <h3 className="text-xl font-serif font-black mb-5">Ledger Iuran</h3>
           <div className="table-wrapper bg-white border border-slate-200 shadow-sm w-full">
             <table className="ledger-table min-w-[550px]">
               <thead className="ledger-head"><tr><th>Nama</th><th>Bulan</th><th>Nominal</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
               <tbody>
-                {[...(iuran || [])].reverse().map(r => (
+                {[...displayIuran].reverse().map(r => (
                   <tr key={r.ID} className="ledger-row">
                     <td className="font-bold">{r.NamaAnggota}</td>
                     <td className="text-xs">{bulanLabel(r.Bulan)}</td>
@@ -739,6 +794,9 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
                     )}
                   </tr>
                 ))}
+                {displayIuran.length === 0 && (
+                  <tr><td colSpan="5" className="text-center py-8 text-slate-400 font-medium">Tidak ada data untuk periode terpilih.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -750,7 +808,7 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
             <table className="ledger-table min-w-[550px]">
               <thead className="ledger-head"><tr><th>Nama</th><th>Bulan</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
               <tbody>
-                {[...(arisan || [])].reverse().map(r => (
+                {[...displayArisan].reverse().map(r => (
                   <tr key={r.ID} className="ledger-row">
                     <td className="font-bold">{r.NamaAnggota}</td>
                     <td className="text-xs">{bulanLabel(r.Bulan)}</td>
@@ -763,6 +821,9 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
                     )}
                   </tr>
                 ))}
+                {displayArisan.length === 0 && (
+                  <tr><td colSpan="5" className="text-center py-8 text-slate-400 font-medium">Tidak ada data untuk periode terpilih.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -782,6 +843,19 @@ function PengeluaranTab({ pengeluaran, isAdmin, setEditModal, handleDelete, apiC
     if(res?.success){ showToast("Pengeluaran dicatat"); setForm({...form, keterangan: "", nominal: ""}); onRefresh(); } else showToast("Gagal", "bad");
   };
 
+  // ==== LOGIKA FILTER BULAN ====
+  const availableMonths = useMemo(() => {
+    const m = (pengeluaran||[]).map(x => extractMonth(x.Tanggal)).filter(Boolean);
+    return [...new Set(m)].sort().reverse();
+  }, [pengeluaran]);
+
+  const [filterBulan, setFilterBulan] = useState("");
+  useEffect(() => {
+    if (!filterBulan && availableMonths.length > 0) setFilterBulan(availableMonths[0]);
+  }, [availableMonths, filterBulan]);
+
+  const displayPengeluaran = (pengeluaran || []).filter(x => filterBulan === "ALL" ? true : extractMonth(x.Tanggal) === filterBulan);
+
   return (
     <div className="animate-slideDown">
       <SectionHeader eyebrow="Buku Pengeluaran" title="Arus Kas Keluar" />
@@ -798,11 +872,24 @@ function PengeluaranTab({ pengeluaran, isAdmin, setEditModal, handleDelete, apiC
         </div>
       )}
 
+      {/* FILTER TABEL PENGELUARAN */}
+      <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 mt-8">
+        <div className="flex items-center gap-3 w-full sm:w-auto mb-3 sm:mb-0">
+           <svg className="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+           <span className="font-bold text-slate-800 text-sm">Filter Buku Pengeluaran:</span>
+        </div>
+        <select value={filterBulan} onChange={(e) => setFilterBulan(e.target.value)} className="p-3 rounded-xl border bg-surface outline-none font-bold text-sm w-full sm:w-auto min-w-[200px] cursor-pointer">
+          {availableMonths.length === 0 && <option value="">Belum ada data</option>}
+          {availableMonths.map(m => <option key={m} value={m}>Bulan {bulanLabel(m)}</option>)}
+          <option value="ALL">Tampilkan Semua Bulan</option>
+        </select>
+      </div>
+
       <div className="table-wrapper bg-white border border-slate-200 shadow-sm">
         <table className="ledger-table min-w-[600px]">
           <thead className="ledger-head"><tr><th>Tgl</th><th>Keterangan</th><th>Kategori</th><th>Nominal</th>{isAdmin && <th>Aksi</th>}</tr></thead>
           <tbody>
-            {[...(pengeluaran || [])].reverse().map(p => (
+            {[...displayPengeluaran].reverse().map(p => (
               <tr key={p.ID} className="ledger-row">
                 <td className="text-xs text-slate-500 font-bold">{formatTanggal(p.Tanggal)}</td>
                 <td className="font-bold text-slate-900">{p.Keterangan}</td>
@@ -816,6 +903,9 @@ function PengeluaranTab({ pengeluaran, isAdmin, setEditModal, handleDelete, apiC
                 )}
               </tr>
             ))}
+            {displayPengeluaran.length === 0 && (
+              <tr><td colSpan="5" className="text-center py-8 text-slate-400 font-medium">Tidak ada data untuk periode terpilih.</td></tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -931,7 +1021,7 @@ function PengaturanTab({ logoB64, setLogoB64, kopSurat, setKopSurat, apiCall, sh
       } else if (jenis === 'iuran_pengeluaran') {
         drawHeader("LAPORAN ARUS KAS KELOMPOK TANI");
         const inF = (iuran || []).filter(i => extractMonth(i.Bulan) === bulanLaporan);
-        const outF = (pengeluaran || []).filter(p => String(p.Tanggal).startsWith(bulanLaporan));
+        const outF = (pengeluaran || []).filter(p => extractMonth(p.Tanggal) === bulanLaporan);
         let totalIn = 0; let totalOut = 0;
         
         doc.setFont("helvetica", "bold"); doc.text("A. PEMASUKAN IURAN WAJIB", 14, startY);
