@@ -199,16 +199,24 @@ function App() {
 
   const stats = useMemo(() => {
     const tIuran = iuran.filter((i) => i.StatusBayar === "Lunas").reduce((s, i) => s + Number(i.Nominal || 0), 0);
-    const tArisan = arisan.filter((a) => a.StatusBayar === "Lunas").reduce((s, a) => s + Number(a.Nominal || 0), 0);
     const tKeluar = pengeluaran.reduce((s, p) => s + Number(p.Nominal || 0), 0);
+    const saldoKas = tIuran - tKeluar;
+
+    // Hitung total nilai nominal arisan pada periode bulan terakhir
+    let arisanPerBulan = {};
+    arisan.forEach(a => {
+        arisanPerBulan[a.Bulan] = (arisanPerBulan[a.Bulan] || 0) + Number(a.Nominal || 0);
+    });
+    const bulanTerakhir = Object.keys(arisanPerBulan).sort().reverse()[0];
+    const jumlahMenangArisan = bulanTerakhir ? arisanPerBulan[bulanTerakhir] : 0;
+
     return {
       totalAnggota: anggota.filter((a) => a.Status === "Aktif").length,
-      saldoBersih: (tIuran + tArisan) - tKeluar,
-      totalArisan: tArisan,
+      saldoKas: saldoKas,
+      jumlahMenangArisan: jumlahMenangArisan,
       totalPengeluaran: tKeluar,
-      totalPupuk: pupukRiwayat.filter((p) => p.Status === "Dapat").reduce((s, p) => s + Number(p.Jumlah_Kg || 0), 0)
     };
-  }, [anggota, iuran, arisan, pengeluaran, pupukRiwayat]);
+  }, [anggota, iuran, arisan, pengeluaran]);
 
   return (
     <div className="font-sans bg-surface min-h-screen text-slate-800 flex flex-col md:flex-row relative">
@@ -537,21 +545,66 @@ function PengaturanTab({ logoB64, setLogoB64, apiCall, showToast, anggota, pupuk
 
 // ================= DASHBOARD =================
 function Dashboard({ stats, antreanPupuk, arisan }) {
+  // Sortir pemenang dari yang paling baru (bulan terbesar) ke yang lama
+  const daftarPemenang = [...arisan]
+    .filter((a) => a.Pemenang === "Y")
+    .sort((a, b) => b.Bulan.localeCompare(a.Bulan));
+
   return (
     <div className="animate-slideDown">
       <SectionHeader eyebrow="Overview" title="Dashboard Utama" desc="Laporan transparan operasional dan keuangan kelompok." />
+      
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
         {[
-          ["Saldo Kas Bersih", formatRupiah(stats.saldoBersih), ""],
-          ["Anggota Aktif", stats.totalAnggota, ""],
+          ["Saldo Kas Kelompok", formatRupiah(stats.saldoKas), ""],
+          ["Nilai Menang Arisan", formatRupiah(stats.jumlahMenangArisan), ""],
           ["Total Pengeluaran", formatRupiah(stats.totalPengeluaran), ""],
-          ["Pupuk Tersalurkan", stats.totalPupuk + " kg", ""],
+          ["Anggota Aktif", stats.totalAnggota, ""],
         ].map(([label, val]) => (
           <div key={label} className="p-6 rounded-[2rem] bg-white border border-slate-200 shadow-sm hover:border-brand-400 hover:shadow-lg transition-all">
             <div className="text-[10px] md:text-xs mb-3 text-slate-500 font-bold uppercase tracking-widest">{label}</div>
             <div className="text-xl md:text-3xl font-serif font-black text-brand-950 tracking-tight whitespace-nowrap">{val}</div>
           </div>
         ))}
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
+        {/* Kolom Kiri: Antrean Pupuk */}
+        <div className="p-7 md:p-8 rounded-[2rem] bg-white border border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-48 h-48 bg-brand-50 rounded-full -z-10"></div>
+          <h3 className="text-xl font-bold mb-2 text-slate-900">Antrean Jatah Pupuk</h3>
+          <p className="text-sm mb-6 text-slate-500 font-medium">Prioritas otomatis bagi anggota yang paling lama belum mendapatkan subsidi.</p>
+          <div className="space-y-3.5">
+            {antreanPupuk.slice(0, 5).map((a, i) => (
+              <div key={a.id} className="flex items-center justify-between text-sm p-4 rounded-2xl bg-surface border border-slate-200">
+                <span className="font-bold text-slate-800"><span className="text-slate-400 font-mono mr-4 text-xs bg-white px-2 py-1 rounded-md">{String(i + 1).padStart(2, "0")}</span>{a.nama}</span>
+                <span className="text-xs font-bold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">{a.terakhir ? formatTanggal(a.terakhir) : "Belum Pernah"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Kolom Kanan: Daftar Pemenang Arisan */}
+        <div className="p-7 md:p-8 rounded-[2rem] bg-white border border-slate-200 shadow-sm relative overflow-hidden flex flex-col">
+          <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-accent-50 rounded-full -z-10"></div>
+          <h3 className="text-xl font-bold mb-6 text-slate-900">Histori Pemenang Arisan</h3>
+          
+          {daftarPemenang.length > 0 ? (
+            <div className="space-y-3.5 max-h-[350px] overflow-y-auto hide-scroll pr-2 z-10 relative">
+              {daftarPemenang.map((p, i) => (
+                <div key={p.ID || i} className="flex items-center gap-4 bg-gradient-to-br from-accent-50 to-orange-50/50 p-4 rounded-2xl border border-accent-200 shadow-sm">
+                  <div className="w-12 h-12 flex items-center justify-center bg-white rounded-xl text-2xl shadow-sm shrink-0 border border-accent-100">🏆</div>
+                  <div>
+                    <div className="font-black text-slate-900 text-lg tracking-tight leading-none mb-1.5">{p.NamaAnggota}</div>
+                    <div className="text-[10px] text-accent-800 font-bold bg-accent-200/50 inline-block px-2.5 py-1 rounded-md uppercase tracking-wider">Periode {bulanLabel(p.Bulan)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500 bg-surface p-6 rounded-3xl text-center border border-slate-200 font-medium">Belum ada histori pemenang tercatat.</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -680,9 +733,8 @@ function AnggotaTab({ anggota, isAdmin, apiCall, onRefresh, showToast, handleDel
   );
 }
 
-// ================= PUPUK & KEUANGAN (Disingkat visual, Fungsi penuh) =================
+// ================= PUPUK & KEUANGAN =================
 function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi, setEditModal, handleDelete }) {
-  // (Fungsi Distribusi masih sama seperti sebelumnya, kita potong untuk merampingkan, tapi tabel bawah kita update)
   return (
     <div className="animate-slideDown">
       <SectionHeader eyebrow="Operasional" title="Distribusi Pupuk" />
