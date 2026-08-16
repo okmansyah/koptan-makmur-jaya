@@ -42,10 +42,10 @@
   body { margin: 0; background-color: #F4F7F6; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
   ::selection { background: #059669; color: white; }
   
-  .table-wrapper { width: 100%; max-height: 65vh; overflow: auto; border-radius: 0.5rem; }
+  .table-wrapper { width: 100%; max-height: 65vh; overflow-x: auto; overflow-y: auto; border-radius: 0.5rem; }
   .table-wrapper::-webkit-scrollbar { width: 6px; height: 6px; }
   .table-wrapper::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
-  .ledger-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 650px; }
+  .ledger-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 550px; }
   .ledger-row td { border-bottom: 1px solid #E2E8F0; padding: 14px 16px; font-size: 14px; color: #1E293B; transition: background 0.2s; white-space: nowrap; }
   .ledger-row:hover td { background: #F8FAFC; }
   .ledger-head th { position: sticky; top: 0; z-index: 10; text-align: left; padding: 14px 16px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.1em; color: #475569; border-bottom: 2px solid #CBD5E1; font-family: 'IBM Plex Mono', monospace; font-weight: 700; background: #F1F5F9; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
@@ -310,7 +310,7 @@ function App() {
         {tab === "anggota" && <AnggotaTab anggota={anggota} isAdmin={isAdmin} apiCall={apiCall} onRefresh={loadAllData} showToast={showToast} handleDelete={handleDelete} handleUpdate={handleUpdate} />}
         {tab === "pupuk" && <PupukTab antreanPupuk={antreanPupuk} riwayat={pupukRiwayat} isAdmin={isAdmin} setEditModal={setEditModal} handleDelete={handleDelete}
             onDistribusi={async (payload) => { const res = await apiCall("distribusiPupuk", payload, "POST"); if (res?.success) { showToast("Distribusi berhasil dicatat"); loadAllData(); } }} />}
-        {tab === "keuangan" && <KeuanganTab arisan={arisan} iuran={iuran} anggota={anggota} isAdmin={isAdmin} setEditModal={setEditModal} handleDelete={handleDelete}
+        {tab === "keuangan" && <KeuanganTab arisan={arisan} iuran={iuran} anggota={anggota} isAdmin={isAdmin} setEditModal={setEditModal} handleDelete={handleDelete} showToast={showToast}
             onCatat={async (payload) => {
               let successCount = 0; let errorMsg = "";
               if (payload.bayarIuran) { const res = await apiCall("catatIuran", { bulan: payload.bulan, anggotaId: payload.anggotaId, statusBayar: "Lunas", nominal: payload.nominalIuran }, "POST"); if (res?.success) successCount++; else errorMsg += "Gagal iuran. "; }
@@ -364,7 +364,6 @@ function App() {
 
 // ================= KOMPONEN TAB: DASHBOARD =================
 function Dashboard({ stats, antreanPupuk, arisan }) {
-  // Sortir pemenang arisan secara aman 
   const daftarPemenang = [...(arisan || [])]
     .filter((a) => a.Pemenang === "Y")
     .sort((a, b) => String(b.Bulan || "").localeCompare(String(a.Bulan || "")));
@@ -452,7 +451,7 @@ function AnggotaTab({ anggota, isAdmin, apiCall, onRefresh, showToast, handleDel
       <div className="mb-6 relative max-w-md"><input placeholder="Cari anggota..." value={q} onChange={(e) => setQ(e.target.value)} className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white" /></div>
 
       <div className="table-wrapper bg-white border border-slate-200 shadow-sm">
-        <table className="ledger-table">
+        <table className="ledger-table min-w-[650px]">
           <thead className="ledger-head"><tr><th>ID</th><th>Identitas Lengkap</th><th>Kontak</th><th>Lahan (Ha)</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
           <tbody>
             {filtered.map((a) => (
@@ -550,7 +549,7 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi, setEditModal, 
       )}
 
       <div className="table-wrapper bg-white border border-slate-200 shadow-sm mt-8">
-        <table className="ledger-table min-w-full">
+        <table className="ledger-table min-w-[550px]">
           <thead className="ledger-head"><tr><th>Tanggal</th><th>Nama</th><th>Total</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
           <tbody>
             {[...(riwayat || [])].reverse().map(r => (
@@ -575,11 +574,14 @@ function PupukTab({ antreanPupuk, riwayat, isAdmin, onDistribusi, setEditModal, 
 }
 
 // ================= KOMPONEN TAB: KEUANGAN =================
-function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, handleDelete }) {
+function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, handleDelete, showToast }) {
   const [form, setForm] = useState({
     bulan: new Date().toISOString().slice(0, 7), anggotaId: anggota && anggota[0] ? anggota[0].ID : "",
     nominalIuran: 25000, nominalArisan: 50000, bayarIuran: false, bayarArisan: false, pemenangArisan: false
   });
+
+  const [editIuran, setEditIuran] = useState(false);
+  const [editArisan, setEditArisan] = useState(false);
 
   const handleSubmit = () => {
     if (!form.bayarIuran && !form.bayarArisan && !form.pemenangArisan) return alert("Pilih satu instrumen keuangan.");
@@ -596,8 +598,32 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
           <div className="grid md:grid-cols-4 gap-5 mb-8">
             <div><label className="block text-xs font-bold mb-2">Periode</label><input type="month" value={form.bulan} onChange={(e) => setForm({ ...form, bulan: e.target.value })} className="w-full px-5 py-3.5 rounded-xl border bg-surface font-bold" /></div>
             <div><label className="block text-xs font-bold mb-2">Anggota</label><select value={form.anggotaId} onChange={(e) => setForm({ ...form, anggotaId: e.target.value })} className="w-full px-5 py-3.5 rounded-xl border bg-surface font-bold">{(anggota || []).map((a) => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}</select></div>
-            <div><label className="block text-xs font-bold mb-2">Tarif Iuran</label><input type="number" value={form.nominalIuran} onChange={(e) => setForm({ ...form, nominalIuran: Number(e.target.value) })} className="w-full px-5 py-3.5 rounded-xl border bg-surface" /></div>
-            <div><label className="block text-xs font-bold mb-2">Tarif Arisan</label><input type="number" value={form.nominalArisan} onChange={(e) => setForm({ ...form, nominalArisan: Number(e.target.value) })} className="w-full px-5 py-3.5 rounded-xl border bg-surface" /></div>
+            
+            {/* TARIF IURAN FITUR UBAH & SIMPAN */}
+            <div>
+              <label className="block text-xs font-bold mb-2">Tarif Iuran</label>
+              <div className="flex gap-2">
+                <input type="number" disabled={!editIuran} value={form.nominalIuran} onChange={(e) => setForm({ ...form, nominalIuran: Number(e.target.value) })} className={`w-full px-4 py-3.5 rounded-xl border ${!editIuran ? 'bg-slate-100 font-bold text-slate-600' : 'bg-surface font-bold text-slate-900 focus:ring-2 focus:ring-brand-500'}`} />
+                {!editIuran ? (
+                  <button type="button" onClick={() => setEditIuran(true)} className="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold shrink-0 transition-colors">Ubah</button>
+                ) : (
+                  <button type="button" onClick={() => { setEditIuran(false); if(showToast) showToast("Nominal Tarif Iuran Diperbarui!"); }} className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shrink-0 shadow transition-colors">Simpan</button>
+                )}
+              </div>
+            </div>
+
+            {/* TARIF ARISAN FITUR UBAH & SIMPAN */}
+            <div>
+              <label className="block text-xs font-bold mb-2">Tarif Arisan</label>
+              <div className="flex gap-2">
+                <input type="number" disabled={!editArisan} value={form.nominalArisan} onChange={(e) => setForm({ ...form, nominalArisan: Number(e.target.value) })} className={`w-full px-4 py-3.5 rounded-xl border ${!editArisan ? 'bg-slate-100 font-bold text-slate-600' : 'bg-surface font-bold text-slate-900 focus:ring-2 focus:ring-brand-500'}`} />
+                {!editArisan ? (
+                  <button type="button" onClick={() => setEditArisan(true)} className="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-bold shrink-0 transition-colors">Ubah</button>
+                ) : (
+                  <button type="button" onClick={() => { setEditArisan(false); if(showToast) showToast("Nominal Tarif Arisan Diperbarui!"); }} className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shrink-0 shadow transition-colors">Simpan</button>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="bg-surface p-6 rounded-3xl border border-slate-200 mb-8">
@@ -612,11 +638,12 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
         </div>
       )}
 
+      {/* TABEL LEDGER DENGAN NAVIGASI DIGESER (SCROLLABLE) */}
       <div className="grid lg:grid-cols-2 gap-8 mt-8">
-        <div>
+        <div className="overflow-hidden flex flex-col">
           <h3 className="text-xl font-serif font-black mb-5">Ledger Iuran</h3>
-          <div className="table-wrapper bg-white border border-slate-200 shadow-sm">
-            <table className="ledger-table">
+          <div className="table-wrapper bg-white border border-slate-200 shadow-sm overflow-x-auto w-full">
+            <table className="ledger-table min-w-[550px]">
               <thead className="ledger-head"><tr><th>Nama</th><th>Bulan</th><th>Nominal</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
               <tbody>
                 {[...(iuran || [])].reverse().map(r => (
@@ -627,8 +654,8 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
                     <td><Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge></td>
                     {isAdmin && (
                        <td className="flex gap-2">
-                         <button onClick={() => setEditModal({open:true, type:'Iuran', data: r})} className="px-2 py-1 bg-slate-100 rounded text-xs font-bold text-brand-700">Ubah</button>
-                         <button onClick={() => handleDelete('Iuran', r.ID)} className="px-2 py-1 bg-rose-50 rounded text-xs font-bold text-rose-700">Hapus</button>
+                         <button onClick={() => setEditModal({open:true, type:'Iuran', data: r})} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-brand-700 transition-colors">Ubah</button>
+                         <button onClick={() => handleDelete('Iuran', r.ID)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg text-xs font-bold text-rose-700 transition-colors">Hapus</button>
                        </td>
                     )}
                   </tr>
@@ -638,10 +665,10 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
           </div>
         </div>
 
-        <div>
+        <div className="overflow-hidden flex flex-col">
           <h3 className="text-xl font-serif font-black mb-5">Ledger Arisan</h3>
-          <div className="table-wrapper bg-white border border-slate-200 shadow-sm">
-            <table className="ledger-table">
+          <div className="table-wrapper bg-white border border-slate-200 shadow-sm overflow-x-auto w-full">
+            <table className="ledger-table min-w-[550px]">
               <thead className="ledger-head"><tr><th>Nama</th><th>Bulan</th><th>Status</th>{isAdmin && <th>Aksi</th>}</tr></thead>
               <tbody>
                 {[...(arisan || [])].reverse().map(r => (
@@ -651,8 +678,8 @@ function KeuanganTab({ arisan, iuran, anggota, isAdmin, onCatat, setEditModal, h
                     <td>{r.Pemenang === "Y" ? <Badge tone="warn">Pemenang</Badge> : <Badge tone={r.StatusBayar === "Lunas" ? "good" : "bad"}>{r.StatusBayar}</Badge>}</td>
                     {isAdmin && (
                        <td className="flex gap-2">
-                         <button onClick={() => setEditModal({open:true, type:'Arisan', data: r})} className="px-2 py-1 bg-slate-100 rounded text-xs font-bold text-brand-700">Ubah</button>
-                         <button onClick={() => handleDelete('Arisan', r.ID)} className="px-2 py-1 bg-rose-50 rounded text-xs font-bold text-rose-700">Hapus</button>
+                         <button onClick={() => setEditModal({open:true, type:'Arisan', data: r})} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-brand-700 transition-colors">Ubah</button>
+                         <button onClick={() => handleDelete('Arisan', r.ID)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg text-xs font-bold text-rose-700 transition-colors">Hapus</button>
                        </td>
                     )}
                   </tr>
@@ -693,7 +720,7 @@ function PengeluaranTab({ pengeluaran, isAdmin, setEditModal, handleDelete, apiC
       )}
 
       <div className="table-wrapper bg-white border border-slate-200 shadow-sm">
-        <table className="ledger-table">
+        <table className="ledger-table min-w-[600px]">
           <thead className="ledger-head"><tr><th>Tgl</th><th>Keterangan</th><th>Kategori</th><th>Nominal</th>{isAdmin && <th>Aksi</th>}</tr></thead>
           <tbody>
             {[...(pengeluaran || [])].reverse().map(p => (
