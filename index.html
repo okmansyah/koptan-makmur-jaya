@@ -101,24 +101,6 @@ function bulanLabel(b) {
   return val;
 }
 
-// Tambahan Fungsi untuk mencari nama bulan & tahun berikutnya (Untuk Tuan Rumah Arisan)
-function getNextMonthLabel(b) {
-  const val = extractMonth(b);
-  if (!val || val === "-") return "-";
-  const parts = val.split("-");
-  if (parts.length >= 2) {
-    let y = parseInt(parts[0], 10);
-    let m = parseInt(parts[1], 10);
-    m += 1;
-    if (m > 12) {
-      m = 1;
-      y += 1;
-    }
-    return `${BULAN_ID[m - 1]} ${y}`;
-  }
-  return val;
-}
-
 function Badge({ children, tone = "neutral" }) {
   const tones = { neutral: "bg-slate-100 text-slate-700 border-slate-200", good: "bg-brand-50 text-brand-800 border-brand-200", warn: "bg-accent-50 text-accent-800 border-accent-200", bad: "bg-rose-50 text-rose-800 border-rose-200", };
   return <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold border ${tones[tone]} font-mono tracking-tight`}>{children}</span>;
@@ -417,8 +399,9 @@ function Dashboard({ stats, antreanPupuk, arisan }) {
     .filter((a) => a.Pemenang === "Y")
     .sort((a, b) => String(b.Bulan || "").localeCompare(String(a.Bulan || "")));
     
-  // Ekstrak pemenang terbaru
-  const pemenangTerakhir = daftarPemenang.length > 0 ? daftarPemenang[0] : null;
+  // Pisahkan pemenang teratas (Calon Tuan Rumah) dengan sisa history lama
+  const calonTuanRumah = daftarPemenang.length > 0 ? daftarPemenang[0] : null;
+  const historiLama = daftarPemenang.length > 1 ? daftarPemenang.slice(1) : [];
 
   return (
     <div className="animate-slideDown">
@@ -457,20 +440,20 @@ function Dashboard({ stats, antreanPupuk, arisan }) {
           <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-accent-50 rounded-full -z-10"></div>
           <h3 className="text-xl font-bold mb-6 text-slate-900">Histori Pemenang Arisan</h3>
           
-          {/* SEKSI TUAN RUMAH (Bulan Depannya Pemenang Terakhir) */}
-          {pemenangTerakhir && (
+          {/* SEKSI TUAN RUMAH (Calon Pemenang Teratas) */}
+          {calonTuanRumah && (
              <div className="mb-5 p-5 bg-gradient-to-r from-brand-50 to-emerald-50/50 border border-brand-200 rounded-2xl shadow-sm relative overflow-hidden">
-               <div className="absolute top-0 right-0 bg-brand-500 text-white text-[9px] font-black px-2 py-1 rounded-bl-lg uppercase tracking-wider">Tuan Rumah Berikutnya</div>
-               <p className="text-xs font-bold text-brand-800 mb-1">Lokasi Pertemuan & Arisan Periode {getNextMonthLabel(pemenangTerakhir.Bulan)}</p>
-               <div className="font-black text-2xl text-slate-900 mb-1">{pemenangTerakhir.NamaAnggota}</div>
-               <p className="text-[10px] text-slate-500 font-medium italic mt-2 leading-relaxed">*Sebagai calon pemenang periode {getNextMonthLabel(pemenangTerakhir.Bulan)}. Status: belum menerima uang tarikan, informasi sekadar referensi lokasi dari pemenang periode bulan sebelumnya.</p>
+               <div className="absolute top-0 right-0 bg-brand-500 text-white text-[9px] font-black px-2 py-1 rounded-bl-lg uppercase tracking-wider">Tuan Rumah & Calon Pemenang</div>
+               <p className="text-xs font-bold text-brand-800 mb-1">Periode {bulanLabel(calonTuanRumah.Bulan)}</p>
+               <div className="font-black text-2xl text-slate-900 mb-1">{calonTuanRumah.NamaAnggota}</div>
+               <p className="text-[10px] text-slate-500 font-medium italic mt-2 leading-relaxed">*Informasi lokasi pertemuan bulanan sekaligus calon penerima arisan. Status: Belum menerima pencairan dana arisan.</p>
              </div>
           )}
 
           {/* HISTORI LIST LAMA TETAP ADA DI BAWAHNYA */}
-          {daftarPemenang.length > 0 ? (
-            <div className={`space-y-3.5 max-h-[250px] overflow-y-auto hide-scroll pr-2 z-10 relative ${pemenangTerakhir ? 'pt-5 border-t border-slate-200/60' : ''}`}>
-              {daftarPemenang.map((p, i) => (
+          {historiLama.length > 0 ? (
+            <div className={`space-y-3.5 max-h-[250px] overflow-y-auto hide-scroll pr-2 z-10 relative ${calonTuanRumah ? 'pt-5 border-t border-slate-200/60' : ''}`}>
+              {historiLama.map((p, i) => (
                 <div key={p.ID || i} className="flex items-center gap-4 bg-gradient-to-br from-accent-50 to-orange-50/50 p-4 rounded-2xl border border-accent-200 shadow-sm">
                   <div className="w-12 h-12 flex items-center justify-center bg-white rounded-xl text-2xl shadow-sm shrink-0 border border-accent-100">🏆</div>
                   <div>
@@ -481,7 +464,7 @@ function Dashboard({ stats, antreanPupuk, arisan }) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500 bg-surface p-6 rounded-3xl text-center border border-slate-200 font-medium">Belum ada histori pemenang tercatat.</p>
+             !calonTuanRumah && <p className="text-sm text-slate-500 bg-surface p-6 rounded-3xl text-center border border-slate-200 font-medium">Belum ada histori pemenang tercatat.</p>
           )}
         </div>
       </div>
@@ -983,6 +966,39 @@ function PengaturanTab({ logoB64, setLogoB64, kopSurat, setKopSurat, apiCall, sh
   const fileGaleriRef = useRef(null);
   const [bulanLaporan, setBulanLaporan] = useState(() => new Date().toISOString().slice(0, 7)); 
   const [judulGaleri, setJudulGaleri] = useState("");
+  
+  // STATE KHUSUS UNTUK FORM TUAN RUMAH (Default: Bulan Depan)
+  const nextMonthDate = new Date();
+  nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+  const [tuanRumahForm, setTuanRumahForm] = useState({
+     bulan: nextMonthDate.toISOString().slice(0, 7),
+     anggotaId: ""
+  });
+  
+  // Set default ID jika data anggota sudah di-load
+  useEffect(() => {
+     if(anggota && anggota.length > 0 && !tuanRumahForm.anggotaId) {
+        setTuanRumahForm(prev => ({...prev, anggotaId: anggota[0].ID}));
+     }
+  }, [anggota]);
+
+  const handleSetTuanRumah = async () => {
+     if(!tuanRumahForm.anggotaId) return showToast("Harap pilih anggota!", "warn");
+     const res = await apiCall("catatArisan", {
+        bulan: tuanRumahForm.bulan,
+        anggotaId: tuanRumahForm.anggotaId,
+        statusBayar: "Belum", // Belum menerima pencairan
+        nominal: 0,           // Nominal 0 agar tidak mengganggu saldo kas saat ini
+        pemenang: "Y"         // Ditandai sebagai pemenang periode tersebut
+     }, "POST");
+     
+     if(res?.success) {
+        showToast("Tuan Rumah berhasil ditetapkan!");
+        onRefresh();
+     } else {
+        showToast("Gagal menetapkan Tuan Rumah", "bad");
+     }
+  };
 
   const handleUploadLogo = (e) => {
     const file = e.target.files[0];
@@ -1083,8 +1099,9 @@ function PengaturanTab({ logoB64, setLogoB64, kopSurat, setKopSurat, apiCall, sh
     <div className="animate-slideDown space-y-6">
       <SectionHeader eyebrow="Konfigurasi" title="Pengaturan & Laporan" desc="Pusat kontrol identitas, unggah media, dan unduh dokumen resmi PDF." />
       
-      <div className="flex gap-2 p-1.5 bg-white border border-slate-200 rounded-2xl w-full max-w-2xl shadow-sm overflow-x-auto hide-scroll">
+      <div className="flex gap-2 p-1.5 bg-white border border-slate-200 rounded-2xl w-full max-w-4xl shadow-sm overflow-x-auto hide-scroll">
          <button onClick={() => setActiveSub('kop')} className={`px-5 py-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeSub === 'kop' ? 'bg-brand-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>Profil & Kop Surat</button>
+         <button onClick={() => setActiveSub('tuanrumah')} className={`px-5 py-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeSub === 'tuanrumah' ? 'bg-brand-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>Tuan Rumah Arisan</button>
          <button onClick={() => setActiveSub('galeri')} className={`px-5 py-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeSub === 'galeri' ? 'bg-brand-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>Unggah Galeri</button>
          <button onClick={() => setActiveSub('cetak')} className={`px-5 py-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeSub === 'cetak' ? 'bg-brand-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>Cetak Laporan PDF</button>
       </div>
@@ -1111,6 +1128,28 @@ function PengaturanTab({ logoB64, setLogoB64, kopSurat, setKopSurat, apiCall, sh
              </div>
              <button onClick={handleSimpanKop} className="px-6 py-3 rounded-xl text-sm font-bold bg-brand-900 text-white shadow-lg w-full">Simpan Format Kop Surat</button>
            </div>
+        </div>
+      )}
+
+      {/* MODUL BARU: PENENTUAN TUAN RUMAH */}
+      {activeSub === 'tuanrumah' && (
+        <div className="p-8 md:p-10 rounded-[2.5rem] bg-white border border-brand-200 shadow-xl max-w-2xl animate-slideDown">
+          <h3 className="font-serif font-black text-2xl mb-2 text-slate-900">Penentuan Tuan Rumah</h3>
+          <p className="text-sm text-slate-500 mb-8 border-b pb-5">Tentukan lokasi pertemuan & calon pemenang arisan untuk periode bulan berikutnya (ataupun periode berjalan).</p>
+          
+          <div className="space-y-6 mb-8">
+             <div>
+               <label className="block text-xs font-bold mb-2 text-slate-700 uppercase tracking-widest">Periode Bulan</label>
+               <input type="month" value={tuanRumahForm.bulan} onChange={(e) => setTuanRumahForm({...tuanRumahForm, bulan: e.target.value})} className="w-full px-5 py-4 rounded-xl border border-slate-200 text-sm font-bold bg-surface outline-none focus:border-brand-500" />
+             </div>
+             <div>
+               <label className="block text-xs font-bold mb-2 text-slate-700 uppercase tracking-widest">Pilih Anggota (Tuan Rumah)</label>
+               <select value={tuanRumahForm.anggotaId} onChange={(e) => setTuanRumahForm({...tuanRumahForm, anggotaId: e.target.value})} className="w-full px-5 py-4 rounded-xl border border-slate-200 text-sm font-bold bg-surface outline-none focus:border-brand-500 cursor-pointer">
+                  {anggota.map(a => <option key={a.ID} value={a.ID}>{a.Nama}</option>)}
+               </select>
+             </div>
+          </div>
+          <button onClick={handleSetTuanRumah} className="px-8 py-4 rounded-xl text-sm font-bold bg-brand-900 text-white shadow-lg w-full">Tetapkan Sebagai Tuan Rumah</button>
         </div>
       )}
 
